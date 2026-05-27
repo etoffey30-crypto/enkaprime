@@ -15,7 +15,11 @@
       // Convert path-based routes (e.g. /enkaprime/admin) to hash routes (/enkaprime/#admin)
       var path = window.location.pathname;
       var base = '/enkaprime/';
-      if (path.startsWith(base)) {
+      
+      // If path is exactly '/enkaprime' or '/enkaprime/', do absolutely nothing
+      if (path === '/enkaprime' || path === '/enkaprime/') {
+        // No redirect
+      } else if (path.startsWith(base)) {
         var route = path.substring(base.length);
         if (route && !route.includes('/assets/') && !route.includes('.')) {
           window.location.replace(base + '#' + route);
