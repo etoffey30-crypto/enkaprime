@@ -78,7 +78,7 @@ const SERVICE_DATA: Record<string, ServiceData> = {
       'Deploy a physical verification team to locate and document all assets',
       'Apply durable barcode or QR labels to every identified item',
       'Build a structured asset register capturing all required metadata',
-      'Align asset data with your finance team's chart of accounts',
+      'Align asset data with your finance team\'s chart of accounts',
       'Implement movement and disposal protocols to keep records current',
       'Provide a digital dashboard for real-time asset status monitoring',
     ],
@@ -114,7 +114,7 @@ const SERVICE_DATA: Record<string, ServiceData> = {
       'Leadership unsure of how to begin or sustain a compliance framework',
     ],
     solutions: [
-      'Conduct a gap analysis to establish your baseline and identify what's missing',
+      'Conduct a gap analysis to establish your baseline and identify what\'s missing',
       'Develop a realistic, phased implementation plan from gap to certification',
       'Build all required documentation — quality manual, SOPs, forms, registers',
       'Train your internal team to run and maintain the management system',

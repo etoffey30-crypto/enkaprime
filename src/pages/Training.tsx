@@ -129,7 +129,7 @@ export default function Training({ onNavigate }: TrainingProps) {
         <section className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex items-center gap-3 mb-10">
-              <Star size={20} style={{ color: GOLD }} className="fill-current" style={{ color: GOLD, fill: GOLD }} />
+              <Star size={20} className="fill-current" style={{ color: GOLD, fill: GOLD }} />
               <h2 className="text-2xl font-extrabold" style={{ color: NAVY }}>Featured Programmes</h2>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
