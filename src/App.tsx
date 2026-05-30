@@ -121,7 +121,7 @@ export default function App() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-white shadow-lg py-3' : 'bg-transparent py-5'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <button onClick={() => navigate('home')} className="flex items-center gap-3">
-          <img src={dbSettings.site_logo || "/CLEAN_LOGO_USE_THIS.png"} alt="Enka Prime Consulting Ltd" className="h-11 w-auto" />
+          <img src={dbSettings.site_logo || "/enkaprime/enkaprime-logo.png"} alt="Enka Prime Consulting Ltd" className="h-11 w-auto object-contain" />
         </button>
 
         <div className="hidden lg:flex items-center gap-8">
@@ -378,7 +378,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-10 pb-10 border-b" style={{ borderColor: `${GOLD}30` }}>
             <div>
-              <img src={dbSettings.site_logo || "/CLEAN_LOGO_USE_THIS.png"} alt="Enka Prime Consulting Ltd" className="h-13 w-auto mb-4 brightness-[2]" />
+              <img src={dbSettings.site_logo || "/enkaprime/enkaprime-logo.png"} alt="Enka Prime Consulting Ltd" className="h-16 w-auto mb-4 object-contain" />
               <p className="text-blue-300 text-sm leading-relaxed mt-4">
                 Professional corporate training that transforms people and organisations.
               </p>
