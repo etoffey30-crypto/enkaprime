@@ -14,10 +14,23 @@ export default function Home({ onNavigate, settings }: HomeProps) {
   const [dbStats, setDbStats] = useState<any[]>([]);
   const [visibleStats, setVisibleStats] = useState<boolean>(false);
 
+  // Read dynamic about preview bullets, split by comma
+  const bulletsString = settings.about_bullets || 'Records Digitalisation & Document Management Systems, Asset Tagging and Asset Register Development, ISO Implementation and Audit Support, Training and Capacity Building';
+  const bullets = bulletsString.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Read dynamic about pull quote
+  const pullQuote = settings.about_pull_quote || 'We do not simply deliver training or isolated services — we help organisations build the systems, structures, and capabilities that drive long-term performance and institutional resilience.';
+
   // Dynamic Word Rotator state
   const [wordIndex, setWordIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const phrases = ['Performance.', 'Systems.', 'Compliance.', 'Capability.', 'Accountability.'];
+  
+  // Read dynamic phrases from settings, split by comma
+  const phrasesString = settings.hero_rotator_words || 'Performance, Systems, Compliance, Capability, Accountability';
+  const phrases = phrasesString.split(',').map(s => {
+    const trimmed = s.trim();
+    return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
+  });
 
   // Particles state - generated once on mount
   const [particles] = useState(() =>
@@ -41,7 +54,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
       }, 400); // matches fade transition duration
     }, 3500);
     return () => clearInterval(interval);
-  }, []);
+  }, [phrases.length]);
 
   const loadStats = useCallback(async () => {
     const { data } = await supabase.from('stats').select('*').eq('is_active', true).order('sort_order');
@@ -189,7 +202,9 @@ export default function Home({ onNavigate, settings }: HomeProps) {
                       </span>
                       <span className="text-[8px] text-blue-200 bg-white/10 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Leadership</span>
                     </div>
-                    <h4 className="text-white text-xs font-semibold leading-relaxed text-left">Records Digitalisation & Document Management</h4>
+                    <h4 className="text-white text-xs font-semibold leading-relaxed text-left">
+                      {settings.hero_widget_left_title || 'Records Digitalisation & Document Management'}
+                    </h4>
                     <div className="flex items-center justify-between mt-1">
                       <div className="flex -space-x-1.5">
                         {[
@@ -218,8 +233,12 @@ export default function Home({ onNavigate, settings }: HomeProps) {
                         ✓
                       </div>
                       <div className="text-left">
-                        <h4 className="text-white text-xs font-bold leading-tight">100% Audit Pass Rate</h4>
-                        <p className="text-[10px] text-blue-200">ISO 9001 / 27001 Implementation</p>
+                        <h4 className="text-white text-xs font-bold leading-tight">
+                          {settings.hero_widget_right_title || '100% Audit Pass Rate'}
+                        </h4>
+                        <p className="text-[10px] text-blue-200">
+                          {settings.hero_widget_right_desc || 'ISO 9001 / 27001 Implementation'}
+                        </p>
                       </div>
                     </div>
                     <span className="text-[8px] font-bold text-yellow-400 bg-yellow-400/20 px-2 py-0.5 rounded-full uppercase tracking-wider border border-yellow-500/20">
@@ -336,14 +355,9 @@ export default function Home({ onNavigate, settings }: HomeProps) {
                 {settings.about_extended || 'Founded on the principle that sustainable organisational performance depends on strong systems rather than skills development alone, we combine practical implementation expertise with structured capacity-building methodologies to deliver measurable and lasting results. Every engagement is tailored to the client\'s operational context, every solution is designed for real-world application, every outcome is focused on efficiency, compliance, and institutional improvement.'}
               </p>
 
-              {/* Four service area bullets */}
+              {/* Dynamic service area bullets */}
               <div className="grid grid-cols-1 gap-3 pt-2">
-                {[
-                  'Records Digitalisation & Document Management Systems',
-                  'Asset Tagging and Asset Register Development',
-                  'ISO Implementation and Audit Support',
-                  'Training and Capacity Building',
-                ].map((item) => (
+                {bullets.map((item) => (
                   <div key={item} className="flex items-start gap-3 group">
                     <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
                       style={{ background: `${GOLD}22` }}>
@@ -356,9 +370,9 @@ export default function Home({ onNavigate, settings }: HomeProps) {
                 ))}
               </div>
 
-              {/* Pull quote */}
-              <p className="text-gray-500 text-sm italic border-l-4 pl-4 py-1 leading-relaxed" style={{ borderColor: GOLD }}>
-                We do not simply deliver training or isolated services — we help organisations build the systems, structures, and capabilities that drive long-term performance and institutional resilience.
+              {/* Dynamic Pull quote */}
+              <p className="text-gray-500 text-sm italic border-l-4 pl-4 py-1 leading-relaxed text-left" style={{ borderColor: GOLD }}>
+                {pullQuote}
               </p>
 
               <button
@@ -387,7 +401,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
                 {/* Floating secondary image */}
                 <div className="hidden md:block absolute -bottom-8 -right-5 w-44 h-32 rounded-xl overflow-hidden shadow-xl border-4 border-white">
                   <img
-                    src="https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg"
+                    src={settings.team_image || "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg"}
                     alt="Team collaboration"
                     className="w-full h-full object-cover"
                   />

@@ -547,8 +547,8 @@ export default function Admin({ onNavigate }: AdminProps) {
       <div className="space-y-4">
         {[
           { group: 'General Settings & Website Logo', keys: ['site_logo'] },
-          { group: 'Hero Section', keys: ['hero_title', 'hero_subtitle', 'hero_description', 'hero_badge_text', 'hero_image'] },
-          { group: 'About Section', keys: ['about_title', 'about_description', 'about_extended', 'about_tagline', 'about_image', 'about_hero_image', 'team_image', 'about_cta_image'] },
+          { group: 'Hero Section', keys: ['hero_title', 'hero_subtitle', 'hero_description', 'hero_badge_text', 'hero_image', 'hero_rotator_words', 'hero_widget_left_title', 'hero_widget_right_title', 'hero_widget_right_desc'] },
+          { group: 'About Section', keys: ['about_title', 'about_description', 'about_extended', 'about_tagline', 'about_image', 'about_hero_image', 'team_image', 'about_cta_image', 'about_bullets', 'about_pull_quote'] },
           { group: 'Featured Programme', keys: ['featured_title', 'featured_subtitle'] },
           { group: 'CTA Section', keys: ['cta_title', 'cta_description', 'cta_image'] },
           { group: 'Contact Info & Pages', keys: ['contact_email', 'contact_phone', 'contact_location', 'contact_hero_image', 'programmes_hero_image'] },
@@ -569,7 +569,7 @@ export default function Admin({ onNavigate }: AdminProps) {
                   ) : (
                     <>
                       <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">{key.replace(/_/g, ' ')}</label>
-                      {key.includes('description') || key.includes('extended') || key.includes('subtitle') ? (
+                      {key.includes('description') || key.includes('extended') || key.includes('subtitle') || key.includes('words') || key.includes('bullets') || key.includes('quote') ? (
                         <textarea
                           rows={3}
                           value={editingSetting[key] || ''}
