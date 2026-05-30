@@ -1,23 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Menu, LogOut, Settings, Users, BookOpen, BarChart3, Save, Plus, Trash2, CreditCard as Edit3, Eye, EyeOff, ArrowLeft, RefreshCw, CheckCircle, AlertCircle, Star, Image as ImageIcon } from 'lucide-react';
+import { 
+  Menu, LogOut, Settings, Users, BookOpen, BarChart3, 
+  Save, Plus, Trash2, CreditCard as Edit3, Eye, EyeOff, 
+  ArrowLeft, RefreshCw, CheckCircle, AlertCircle, Star, 
+  Image as ImageIcon, Palette, Compass, Layout, 
+  ArrowUp, ArrowDown, FileText, Link, HelpCircle, Layers
+} from 'lucide-react';
 
 const GOLD = '#C9A84C';
 const NAVY = '#0F2044';
 
-type Section = 'dashboard' | 'settings' | 'services' | 'programmes' | 'stats';
-type Tab = Section;
+type AdminTab = 'dashboard' | 'pages' | 'programmes' | 'design_system' | 'navigation' | 'homepage_builder' | 'footer' | 'settings';
 
 interface SiteSetting { id: string; key: string; value: string; updated_at: string }
 interface Service { id: string; code: string; title: string; description: string; full_description: string; image_url: string; sort_order: number; is_active: boolean; created_at: string; updated_at: string }
 interface Programme { id: string; code: string; title: string; days: number; category: string; is_active: boolean; is_featured: boolean; description: string; created_at: string; updated_at: string }
-interface Stat { id: string; value: string; label: string; sort_order: number; is_active: boolean; created_at: string; updated_at: string }
+interface CourseModule { id: string; code: string; title: string; description: string; duration: string }
 
-interface AdminProps {
-  onNavigate: (page: string) => void;
-}
-
-export default function Admin({ onNavigate }: AdminProps) {
+export default function Admin({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
@@ -25,25 +26,31 @@ export default function Admin({ onNavigate }: AdminProps) {
   const [authError, setAuthError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Data states
+  // Core Data States
   const [settings, setSettings] = useState<SiteSetting[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
-  const [stats, setStats] = useState<Stat[]>([]);
+  const [courseModules, setCourseModules] = useState<CourseModule[]>([]);
 
-  // Edit states
+  // Settings Mapping
+  const [editingSettings, setEditingSettings] = useState<Record<string, string>>({});
   const [originalSettings, setOriginalSettings] = useState<Record<string, string>>({});
-  const [editingSetting, setEditingSetting] = useState<Record<string, string>>({});
+
+  // Active editors
   const [editingService, setEditingService] = useState<Service | null>(null);
-  const [editingProgramme, setEditingProgramme] = useState<Programme | null>(null);
-  const [editingStat, setEditingStat] = useState<Stat | null>(null);
+  const [editingProgramme, setEditingProgramme] = useState<any | null>(null);
+  const [editingModule, setEditingModule] = useState<CourseModule | null>(null);
+
   const [showNewService, setShowNewService] = useState(false);
   const [showNewProgramme, setShowNewProgramme] = useState(false);
-  const [showNewStat, setShowNewStat] = useState(false);
+  const [showNewModule, setShowNewModule] = useState(false);
+
+  // Content Management - Selected Page editor
+  const [selectedPage, setSelectedPage] = useState<'home' | 'about' | 'contact' | 'services'>('home');
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -62,27 +69,37 @@ export default function Admin({ onNavigate }: AdminProps) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadData = useCallback(async () => {
+  const loadAllData = useCallback(async () => {
     if (!session) return;
-    const [settingsRes, servicesRes, programmesRes, statsRes] = await Promise.all([
+    const [settingsRes, servicesRes, programmesRes] = await Promise.all([
       supabase.from('site_settings').select('*').order('key'),
       supabase.from('services').select('*').order('sort_order'),
       supabase.from('programmes').select('*').order('category, code'),
-      supabase.from('stats').select('*').order('sort_order'),
     ]);
+
     if (settingsRes.data) {
       setSettings(settingsRes.data);
       const map: Record<string, string> = {};
       settingsRes.data.forEach((s: SiteSetting) => { map[s.key] = s.value; });
-      setEditingSetting(map);
+      setEditingSettings(map);
       setOriginalSettings(map);
+
+      // Parse reusable course modules
+      if (map.course_modules) {
+        try {
+          setCourseModules(JSON.parse(map.course_modules));
+        } catch (e) {
+          console.error('Failed to parse course modules:', e);
+        }
+      } else {
+        setCourseModules([]);
+      }
     }
     if (servicesRes.data) setServices(servicesRes.data);
     if (programmesRes.data) setProgrammes(programmesRes.data);
-    if (statsRes.data) setStats(statsRes.data);
   }, [session]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { loadAllData(); }, [loadAllData]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,33 +119,35 @@ export default function Admin({ onNavigate }: AdminProps) {
     setSession(null);
   };
 
-  // ─── Settings save ───
-  const saveSettings = async () => {
+  // Helper: Central Save for Key/Value settings in Supabase
+  const saveSettingKey = async (key: string, value: string) => {
     try {
-      const changedSettings = Object.entries(editingSetting)
-        .filter(([key, value]) => value !== originalSettings[key])
-        .map(([key, value]) => ({
-          key,
-          value,
-          updated_at: new Date().toISOString()
-        }));
-
-      if (changedSettings.length === 0) {
-        showToast('No changes to save');
-        return;
-      }
-
       const { error } = await supabase
         .from('site_settings')
-        .upsert(changedSettings, { onConflict: 'key' });
-
+        .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
       if (error) throw error;
-
-      await loadData();
-      showToast('Settings saved successfully');
+      showToast(`Saved ${key.replace(/_/g, ' ')} successfully`);
+      loadAllData();
     } catch (err: any) {
-      console.error('Error saving settings:', err);
-      showToast(err.message || 'Failed to save settings. Please check database permissions.', 'error');
+      console.error(err);
+      showToast(err.message || 'Save failed', 'error');
+    }
+  };
+
+  const saveMultipleSettings = async (updates: Record<string, string>) => {
+    try {
+      const payload = Object.entries(updates).map(([key, value]) => ({
+        key,
+        value,
+        updated_at: new Date().toISOString()
+      }));
+      const { error } = await supabase.from('site_settings').upsert(payload, { onConflict: 'key' });
+      if (error) throw error;
+      showToast('Settings saved successfully');
+      loadAllData();
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || 'Save failed', 'error');
     }
   };
 
@@ -143,100 +162,97 @@ export default function Admin({ onNavigate }: AdminProps) {
     }
     setEditingService(null);
     setShowNewService(false);
-    await loadData();
+    await loadAllData();
     showToast('Service saved');
   };
 
   const deleteService = async (id: string) => {
     if (!confirm('Delete this service?')) return;
     await supabase.from('services').delete().eq('id', id);
-    await loadData();
+    await loadAllData();
     showToast('Service deleted');
   };
 
   const toggleServiceActive = async (id: string, is_active: boolean) => {
     await supabase.from('services').update({ is_active: !is_active, updated_at: new Date().toISOString() }).eq('id', id);
-    await loadData();
+    await loadAllData();
     showToast(`Service ${!is_active ? 'activated' : 'deactivated'}`);
   };
 
   // ─── Programme CRUD ───
-  const saveProgramme = async (prog: Partial<Programme>) => {
-    if (prog.id) {
-      const { error } = await supabase.from('programmes').update({ ...prog, updated_at: new Date().toISOString() }).eq('id', prog.id);
+  const saveProgramme = async (prog: any) => {
+    // stringify modules array inside metadata if needed
+    const { id, ...data } = prog;
+    if (id) {
+      const { error } = await supabase.from('programmes').update({ ...data, updated_at: new Date().toISOString() }).eq('id', id);
       if (error) { showToast(error.message, 'error'); return; }
     } else {
-      const { error } = await supabase.from('programmes').insert(prog);
+      const { error } = await supabase.from('programmes').insert(data);
       if (error) { showToast(error.message, 'error'); return; }
     }
     setEditingProgramme(null);
     setShowNewProgramme(false);
-    await loadData();
+    await loadAllData();
     showToast('Programme saved');
   };
 
   const deleteProgramme = async (id: string) => {
     if (!confirm('Delete this programme?')) return;
     await supabase.from('programmes').delete().eq('id', id);
-    await loadData();
+    await loadAllData();
     showToast('Programme deleted');
   };
 
   const toggleProgrammeActive = async (id: string, is_active: boolean) => {
     await supabase.from('programmes').update({ is_active: !is_active, updated_at: new Date().toISOString() }).eq('id', id);
-    await loadData();
+    await loadAllData();
   };
 
   const toggleProgrammeFeatured = async (id: string, is_featured: boolean) => {
     await supabase.from('programmes').update({ is_featured: !is_featured, updated_at: new Date().toISOString() }).eq('id', id);
-    await loadData();
+    await loadAllData();
   };
 
-  // ─── Stat CRUD ───
-  const saveStat = async (stat: Partial<Stat>) => {
-    if (stat.id) {
-      const { error } = await supabase.from('stats').update({ ...stat, updated_at: new Date().toISOString() }).eq('id', stat.id);
-      if (error) { showToast(error.message, 'error'); return; }
+  // ─── Reusable Modules CRUD ───
+  const saveCourseModule = async (mod: CourseModule) => {
+    let updated = [...courseModules];
+    const idx = updated.findIndex(m => m.id === mod.id);
+    if (idx >= 0) {
+      updated[idx] = mod;
     } else {
-      const { error } = await supabase.from('stats').insert(stat);
-      if (error) { showToast(error.message, 'error'); return; }
+      updated.push(mod);
     }
-    setEditingStat(null);
-    setShowNewStat(false);
-    await loadData();
-    showToast('Stat saved');
+    setCourseModules(updated);
+    setEditingModule(null);
+    setShowNewModule(false);
+    // save to Supabase site_settings
+    await saveSettingKey('course_modules', JSON.stringify(updated));
   };
 
-  const deleteStat = async (id: string) => {
-    if (!confirm('Delete this stat?')) return;
-    await supabase.from('stats').delete().eq('id', id);
-    await loadData();
-    showToast('Stat deleted');
+  const deleteCourseModule = async (id: string) => {
+    if (!confirm('Delete this reusable course module?')) return;
+    const updated = courseModules.filter(m => m.id !== id);
+    setCourseModules(updated);
+    await saveSettingKey('course_modules', JSON.stringify(updated));
   };
 
-  const toggleStatActive = async (id: string, is_active: boolean) => {
-    await supabase.from('stats').update({ is_active: !is_active, updated_at: new Date().toISOString() }).eq('id', id);
-    await loadData();
-  };
-
-  // ─── Loading state ───
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: NAVY }}>
-        <RefreshCw size={32} className="animate-spin" style={{ color: GOLD }} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-900" style={{ background: NAVY }}>
+        <RefreshCw size={32} className="animate-spin text-custom-secondary" style={{ color: GOLD }} />
       </div>
     );
   }
 
-  // ─── Login screen ───
+  // Login View
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <img src="/enkaprime/enkaprime-logo.png" alt="Enka Prime" className="h-16 mx-auto mb-4 object-contain" />
-            <h1 className="text-2xl font-bold" style={{ color: NAVY }}>Admin Portal</h1>
-            <p className="text-gray-500 text-sm mt-1">Sign in to manage your website content</p>
+            <h1 className="text-2xl font-bold text-slate-800">Admin Portal</h1>
+            <p className="text-gray-500 text-sm mt-1">Sign in to manage consulting content</p>
           </div>
 
           <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
@@ -247,35 +263,35 @@ export default function Admin({ onNavigate }: AdminProps) {
             )}
             {signUpSuccess && (
               <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm flex items-center gap-2">
-                <CheckCircle size={16} /> Account created! You can now sign in.
+                <CheckCircle size={16} /> Account created! Log in below.
               </div>
             )}
             <div className="mb-4">
-              <label className="block text-sm font-semibold mb-2" style={{ color: NAVY }}>Email</label>
+              <label className="block text-sm font-semibold mb-2 text-slate-800">Email</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-100 bg-gray-50"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-100 bg-gray-50 text-slate-800"
                 placeholder="admin@enkaprime.com"
               />
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-semibold mb-2" style={{ color: NAVY }}>Password</label>
+              <label className="block text-sm font-semibold mb-2 text-slate-800">Password</label>
               <input
                 type="password"
                 required
                 minLength={6}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-100 bg-gray-50"
-                placeholder={isSignUp ? 'Min. 6 characters' : 'Enter password'}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-100 bg-gray-50 text-slate-800"
+                placeholder="Enter password"
               />
             </div>
             <button
               type="submit"
-              className="w-full py-3.5 font-bold rounded-xl text-white transition-all hover:scale-[1.02] hover:shadow-lg"
+              className="w-full py-3.5 font-bold rounded-xl text-white transition-all hover:scale-[1.02] bg-slate-900 hover:bg-slate-850"
               style={{ background: NAVY }}
             >
               {isSignUp ? 'Create Account' : 'Sign In'}
@@ -300,162 +316,120 @@ export default function Admin({ onNavigate }: AdminProps) {
     );
   }
 
-  // ─── Dashboard content ───
-  const TAB_CONFIG: { key: Tab; label: string; icon: any }[] = [
+  // Sidebar components config
+  const TAB_CONFIG: { key: AdminTab; label: string; icon: any }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { key: 'settings', label: 'Site Settings', icon: Settings },
-    { key: 'services', label: 'Services', icon: Users },
-    { key: 'programmes', label: 'Programmes', icon: BookOpen },
-    { key: 'stats', label: 'Statistics', icon: BarChart3 },
+    { key: 'pages', label: 'Pages (Content)', icon: FileText },
+    { key: 'programmes', label: 'Programmes & Modules', icon: BookOpen },
+    { key: 'design_system', label: 'Design System', icon: Palette },
+    { key: 'navigation', label: 'Navigation Manager', icon: Compass },
+    { key: 'homepage_builder', label: 'Homepage Builder', icon: Layout },
+    { key: 'footer', label: 'Footer Settings', icon: Layers },
+    { key: 'settings', label: 'General Settings', icon: Settings },
   ];
 
-  const Sidebar = () => (
-    <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 flex flex-col transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-      style={{ background: NAVY }}>
-      <div className="p-5 border-b" style={{ borderColor: `${GOLD}30` }}>
-        <img src="/enkaprime/enkaprime-logo.png" alt="Enka Prime" className="h-10 object-contain" />
-        <div className="text-xs mt-2 font-semibold" style={{ color: GOLD }}>Admin Panel</div>
-      </div>
-
-      <nav className="flex-1 py-4">
-        {TAB_CONFIG.map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-5 py-3 text-sm font-semibold transition-colors ${
-                activeTab === tab.key ? 'text-white' : 'text-blue-300 hover:text-white'
-              }`}
-              style={activeTab === tab.key ? { background: `${GOLD}20`, borderRight: `3px solid ${GOLD}` } : {}}
-            >
-              <Icon size={18} /> {tab.label}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="p-4 border-t" style={{ borderColor: `${GOLD}20` }}>
-        <div className="text-blue-300 text-xs mb-3 truncate">{session.user.email}</div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-red-300 hover:bg-red-900/30 transition-colors"
-        >
-          <LogOut size={16} /> Sign Out
-        </button>
-      </div>
-    </aside>
-  );
-
+  // 1. DASHBOARD VIEW
   const DashboardView = () => (
-    <div>
-      <h2 className="text-2xl font-bold mb-6" style={{ color: NAVY }}>Dashboard Overview</h2>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Services', count: services.length, active: services.filter(s => s.is_active).length, icon: Users, color: '#2563eb' },
-          { label: 'Programmes', count: programmes.length, active: programmes.filter(p => p.is_active).length, icon: BookOpen, color: '#059669' },
-          { label: 'Statistics', count: stats.length, active: stats.filter(s => s.is_active).length, icon: BarChart3, color: '#d97706' },
-          { label: 'Settings', count: settings.length, active: settings.length, icon: Settings, color: '#7c3aed' },
-        ].map(item => {
-          const Icon = item.icon;
-          return (
-            <div key={item.label} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <Icon size={22} style={{ color: item.color }} />
-                <span className="text-xs font-semibold px-2 py-1 rounded-lg" style={{ background: `${item.color}15`, color: item.color }}>
-                  {item.active} active
-                </span>
-              </div>
-              <div className="text-3xl font-bold" style={{ color: NAVY }}>{item.count}</div>
-              <div className="text-sm text-gray-500 mt-1">{item.label}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <h3 className="font-bold text-lg mb-4" style={{ color: NAVY }}>Featured Programmes</h3>
-        <div className="space-y-2">
-          {programmes.filter(p => p.is_featured).length === 0 && (
-            <p className="text-gray-400 text-sm">No featured programmes. Mark programmes as featured from the Programmes tab.</p>
-          )}
-          {programmes.filter(p => p.is_featured).map(p => (
-            <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-yellow-50 border border-yellow-100">
-              <div>
-                <span className="text-xs font-bold mr-2" style={{ color: GOLD }}>{p.code}</span>
-                <span className="text-sm font-medium text-gray-800">{p.title}</span>
-              </div>
-              <span className="text-xs text-gray-500">{p.days} days</span>
-            </div>
-          ))}
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Welcome to Enka Prime CMS</h2>
+          <p className="text-gray-500 text-sm">Control training parameters, modular configurations, and visual themes instantly.</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-3.5 py-1.5 rounded-full">
+          <span className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+          Supabase Connected
         </div>
       </div>
 
-      <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6">
-        <h3 className="font-bold text-lg mb-4" style={{ color: NAVY }}>Quick Links</h3>
-        <div className="grid sm:grid-cols-3 gap-3">
-          {[
-            { label: 'View Website', action: () => onNavigate('home'), icon: ArrowLeft },
-            { label: 'Detailed CMS', action: () => onNavigate('cms'), icon: Settings },
-            { label: 'Manage Services', action: () => setActiveTab('services'), icon: Users },
-          ].map(item => {
-            const Icon = item.icon;
-            return (
-              <button key={item.label} onClick={item.action}
-                className="flex items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-yellow-300 hover:shadow-md transition-all text-left">
-                <Icon size={18} style={{ color: GOLD }} />
-                <span className="text-sm font-semibold text-gray-700">{item.label}</span>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Active Services', count: services.length, icon: Users, color: '#3b82f6' },
+          { label: 'Catalogued Programmes', count: programmes.length, icon: BookOpen, color: '#10b981' },
+          { label: 'Reusable Modules', count: courseModules.length, icon: Layers, color: '#f59e0b' },
+          { label: 'Site Settings Saved', count: settings.length, icon: Settings, color: '#8b5cf6' },
+        ].map(item => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-bold text-gray-400 uppercase">{item.label}</span>
+                <Icon size={18} style={{ color: item.color }} />
+              </div>
+              <div className="text-3xl font-extrabold text-slate-800">{item.count}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Quick Links */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 className="font-bold text-slate-800 text-lg mb-4">Quick Page Builders</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Edit Design System', tab: 'design_system' as AdminTab, icon: Palette },
+              { label: 'Manage Navigation', tab: 'navigation' as AdminTab, icon: Compass },
+              { label: 'Homepage Modules', tab: 'homepage_builder' as AdminTab, icon: Layout },
+              { label: 'Footer Brand Settings', tab: 'footer' as AdminTab, icon: Settings },
+            ].map(link => (
+              <button
+                key={link.label}
+                onClick={() => setActiveTab(link.tab)}
+                className="p-4 border border-gray-100 hover:border-yellow-500 rounded-xl flex flex-col gap-2 items-center text-center transition-colors group"
+              >
+                <link.icon size={22} className="text-gray-400 group-hover:text-custom-secondary" style={{ color: GOLD }} />
+                <span className="text-xs font-semibold text-slate-700">{link.label}</span>
               </button>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+
+        {/* Featured list */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 className="font-bold text-slate-800 text-lg mb-4">Featured Catalogue Highlights</h3>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            {programmes.filter(p => p.is_featured).length === 0 ? (
+              <p className="text-xs text-gray-400">No featured training programmes catalogued. Mark a programme as featured below.</p>
+            ) : (
+              programmes.filter(p => p.is_featured).map(p => (
+                <div key={p.id} className="flex justify-between items-center p-3 rounded-lg bg-yellow-50/50 border border-yellow-100">
+                  <div className="flex gap-2 items-center">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">{p.code}</span>
+                    <span className="text-xs font-bold text-slate-700">{p.title}</span>
+                  </div>
+                  <span className="text-xs text-slate-500 font-medium">{p.days} Days</span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 
-  const ImageSettingField = ({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  // Image Upload Field helper
+  const ImageUploadField = ({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) => {
+    const fileRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        if (!file.type.startsWith('image/')) {
-          showToast('Please select a valid image file', 'error');
-          return;
-        }
-
         const reader = new FileReader();
         reader.onloadend = () => {
           if (typeof reader.result === 'string') {
             const img = new Image();
             img.onload = () => {
               const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 1200;
-              const MAX_HEIGHT = 1200;
-              let width = img.width;
-              let height = img.height;
-
-              if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height *= MAX_WIDTH / width;
-                  width = MAX_WIDTH;
-                }
-              } else {
-                if (height > MAX_HEIGHT) {
-                  width *= MAX_HEIGHT / height;
-                  height = MAX_HEIGHT;
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
+              const MAX = 800;
+              let w = img.width, h = img.height;
+              if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
+              else if (h > w && h > MAX) { w *= MAX / h; h = MAX; }
+              canvas.width = w; canvas.height = h;
               const ctx = canvas.getContext('2d');
               if (ctx) {
-                ctx.drawImage(img, 0, 0, width, height);
-                // Compress as JPEG at 75% quality to significantly reduce payload size
-                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
-                onChange(compressedDataUrl);
+                ctx.drawImage(img, 0, 0, w, h);
+                onChange(canvas.toDataURL('image/jpeg', 0.75));
               } else {
                 onChange(reader.result as string);
               }
@@ -468,63 +442,53 @@ export default function Admin({ onNavigate }: AdminProps) {
     };
 
     return (
-      <div className="border border-gray-100 rounded-xl p-4 bg-gray-50/50 flex flex-col md:flex-row gap-5 items-start md:items-center mb-2">
-        {/* Image Preview */}
+      <div className="border border-gray-100 rounded-xl p-4 bg-gray-50/50 flex flex-col md:flex-row gap-5 items-start md:items-center">
         <div 
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full md:w-48 h-28 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:border-yellow-500 hover:shadow-md transition-all relative group"
+          onClick={() => fileRef.current?.click()}
+          className="w-full md:w-36 h-20 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:border-yellow-500 transition-all relative group flex-shrink-0"
         >
           {value ? (
             <>
               <img src={value} alt={label} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-2">
-                <ImageIcon size={16} /> Click to Upload
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                Change Image
               </div>
             </>
           ) : (
-            <div className="text-gray-400 flex flex-col items-center gap-1">
-              <ImageIcon size={24} />
-              <span className="text-[10px] font-semibold">No Image</span>
+            <div className="text-gray-400 flex flex-col items-center gap-0.5">
+              <ImageIcon size={18} />
+              <span className="text-[9px] font-bold">Upload Image</span>
             </div>
           )}
         </div>
 
-        {/* Inputs & Actions */}
-        <div className="flex-1 w-full space-y-3">
+        <div className="flex-1 w-full space-y-2">
           <div>
-            <label className="block text-xs font-bold mb-1 uppercase tracking-wider text-gray-500">{label}</label>
+            <label className="block text-[10px] font-bold mb-1 uppercase text-gray-400">{label}</label>
             <input
               type="text"
               value={value || ''}
               onChange={e => onChange(e.target.value)}
-              placeholder="Paste image link here (e.g. from Pexels/Unsplash)"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-100 text-xs bg-white text-gray-800"
+              placeholder="Paste custom image URL or upload file"
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white text-slate-800"
             />
           </div>
-
           <div className="flex items-center gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              className="hidden"
-            />
+            <input type="file" ref={fileRef} onChange={handleFile} accept="image/*" className="hidden" />
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 text-xs font-bold rounded-lg hover:scale-105 transition-all shadow-sm flex items-center gap-1.5 text-white"
-              style={{ backgroundColor: NAVY }}
+              onClick={() => fileRef.current?.click()}
+              className="px-3 py-1.5 text-[10px] font-bold rounded bg-slate-800 text-white hover:bg-slate-700 transition-all"
             >
-              <Plus size={14} /> Upload from Computer
+              Upload Local File
             </button>
             {value && (
               <button
                 type="button"
                 onClick={() => onChange('')}
-                className="px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold rounded-lg transition-all"
+                className="px-3 py-1.5 text-[10px] text-red-600 bg-red-50 hover:bg-red-100 font-bold rounded"
               >
-                Clear Image
+                Clear
               </button>
             )}
           </div>
@@ -533,427 +497,905 @@ export default function Admin({ onNavigate }: AdminProps) {
     );
   };
 
-  const SettingsView = () => (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold" style={{ color: NAVY }}>Site Settings</h2>
-        <button onClick={saveSettings}
-          className="flex items-center gap-2 px-5 py-2.5 font-bold text-sm rounded-lg transition-all hover:scale-105"
-          style={{ background: GOLD, color: NAVY }}>
-          <Save size={16} /> Save All
-        </button>
-      </div>
+  // 2. PAGES EDIT TAB
+  const PagesView = () => {
+    const handleFieldChange = (key: string, val: string) => {
+      setEditingSettings(prev => ({ ...prev, [key]: val }));
+    };
 
-      <div className="space-y-4">
-        {[
-          { group: 'General Settings & Website Logo', keys: ['site_logo'] },
-          { group: 'Hero Section', keys: ['hero_title', 'hero_subtitle', 'hero_description', 'hero_badge_text', 'hero_image', 'hero_rotator_words', 'hero_widget_left_title', 'hero_widget_right_title', 'hero_widget_right_desc'] },
-          { group: 'About Section', keys: ['about_title', 'about_description', 'about_extended', 'about_tagline', 'about_image', 'about_hero_image', 'team_image', 'about_cta_image', 'about_bullets', 'about_pull_quote'] },
-          { group: 'Featured Programme', keys: ['featured_title', 'featured_subtitle'] },
-          { group: 'CTA Section', keys: ['cta_title', 'cta_description', 'cta_image'] },
-          { group: 'Contact Info & Pages', keys: ['contact_email', 'contact_phone', 'contact_location', 'contact_hero_image', 'programmes_hero_image'] },
-        ].map(group => (
-          <div key={group.group} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100" style={{ background: `${NAVY}05` }}>
-              <h3 className="font-bold text-sm" style={{ color: NAVY }}>{group.group}</h3>
+    const renderPageFields = () => {
+      switch (selectedPage) {
+        case 'home':
+          return (
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-2">Hero Section Content</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Hero Title</label>
+                  <input type="text" value={editingSettings.hero_title || ''} onChange={e => handleFieldChange('hero_title', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Badge Rotator / Text</label>
+                  <input type="text" value={editingSettings.hero_badge_text || ''} onChange={e => handleFieldChange('hero_badge_text', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Hero Description</label>
+                  <textarea rows={3} value={editingSettings.hero_description || ''} onChange={e => handleFieldChange('hero_description', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Hero Dynamic Word Rotator (Comma separated)</label>
+                  <input type="text" value={editingSettings.hero_rotator_words || ''} onChange={e => handleFieldChange('hero_rotator_words', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="Performance, Systems, Compliance" />
+                </div>
+                <div className="md:col-span-2">
+                  <ImageUploadField label="Hero Banner Background Image" value={editingSettings.hero_image || ''} onChange={val => handleFieldChange('hero_image', val)} />
+                </div>
+              </div>
+
+              <h4 className="font-bold text-slate-800 text-sm border-b pb-2 pt-4 mb-2">Glassmorphic Console Widget Data</h4>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Widget Left Title</label>
+                  <input type="text" value={editingSettings.hero_widget_left_title || ''} onChange={e => handleFieldChange('hero_widget_left_title', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Widget Right Title</label>
+                  <input type="text" value={editingSettings.hero_widget_right_title || ''} onChange={e => handleFieldChange('hero_widget_right_title', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Widget Right Description</label>
+                  <input type="text" value={editingSettings.hero_widget_right_desc || ''} onChange={e => handleFieldChange('hero_widget_right_desc', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+              </div>
             </div>
-            <div className="p-6 space-y-4">
-              {group.keys.map(key => (
-                <div key={key}>
-                  {key.includes('_image') || key.includes('_logo') ? (
-                    <ImageSettingField
-                      label={key.replace(/_/g, ' ')}
-                      value={editingSetting[key] || ''}
-                      onChange={val => setEditingSetting(prev => ({ ...prev, [key]: val }))}
-                    />
-                  ) : (
-                    <>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">{key.replace(/_/g, ' ')}</label>
-                      {key.includes('description') || key.includes('extended') || key.includes('subtitle') || key.includes('words') || key.includes('bullets') || key.includes('quote') ? (
-                        <textarea
-                          rows={3}
-                          value={editingSetting[key] || ''}
-                          onChange={e => setEditingSetting(prev => ({ ...prev, [key]: e.target.value }))}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-100 text-sm bg-gray-50"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={editingSetting[key] || ''}
-                          onChange={e => setEditingSetting(prev => ({ ...prev, [key]: e.target.value }))}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-100 text-sm bg-gray-50"
-                        />
-                      )}
-                    </>
-                  )}
+          );
+        case 'about':
+          return (
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-2">Who We Are Story block</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Story Title</label>
+                  <input type="text" value={editingSettings.about_title || ''} onChange={e => handleFieldChange('about_title', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
                 </div>
-              ))}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Story Tagline / Mission</label>
+                  <input type="text" value={editingSettings.about_tagline || ''} onChange={e => handleFieldChange('about_tagline', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Summary Description</label>
+                  <textarea rows={3} value={editingSettings.about_description || ''} onChange={e => handleFieldChange('about_description', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Extended Description (Secondary Paragraph)</label>
+                  <textarea rows={4} value={editingSettings.about_extended || ''} onChange={e => handleFieldChange('about_extended', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Dynamic About Bullets (Comma separated list)</label>
+                  <textarea rows={2} value={editingSettings.about_bullets || ''} onChange={e => handleFieldChange('about_bullets', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Pull Quote</label>
+                  <textarea rows={2} value={editingSettings.about_pull_quote || ''} onChange={e => handleFieldChange('about_pull_quote', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+              </div>
+
+              <h4 className="font-bold text-slate-800 text-sm border-b pb-2 pt-4 mb-2">Story Visual Elements</h4>
+              <div className="space-y-4">
+                <ImageUploadField label="Primary Story Image" value={editingSettings.about_image || ''} onChange={val => handleFieldChange('about_image', val)} />
+                <ImageUploadField label="Secondary Team Image" value={editingSettings.team_image || ''} onChange={val => handleFieldChange('team_image', val)} />
+                <ImageUploadField label="Partnership CTA banner" value={editingSettings.about_cta_image || ''} onChange={val => handleFieldChange('about_cta_image', val)} />
+              </div>
+            </div>
+          );
+        case 'services':
+          return (
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-2">Disciplines Header & Highlights</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">CTA Headline</label>
+                  <input type="text" value={editingSettings.cta_title || ''} onChange={e => handleFieldChange('cta_title', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Highlight Word</label>
+                  <input type="text" value={editingSettings.cta_discipline_highlight || ''} onChange={e => handleFieldChange('cta_discipline_highlight', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">CTA Description</label>
+                  <textarea rows={2} value={editingSettings.cta_description || ''} onChange={e => handleFieldChange('cta_description', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <ImageUploadField label="CTA Background Image" value={editingSettings.cta_image || ''} onChange={val => handleFieldChange('cta_image', val)} />
+                </div>
+              </div>
+            </div>
+          );
+        case 'contact':
+          return (
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 text-sm border-b pb-2 mb-2">Contact Channels & Hero Backgrounds</h4>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Contact Email Address</label>
+                  <input type="email" value={editingSettings.contact_email || ''} onChange={e => handleFieldChange('contact_email', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Contact Phone Number</label>
+                  <input type="text" value={editingSettings.contact_phone || ''} onChange={e => handleFieldChange('contact_phone', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Contact Location</label>
+                  <input type="text" value={editingSettings.contact_location || ''} onChange={e => handleFieldChange('contact_location', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4">
+                <ImageUploadField label="Contact Page Banner Image" value={editingSettings.contact_hero_image || ''} onChange={val => handleFieldChange('contact_hero_image', val)} />
+                <ImageUploadField label="Training Catalog Banner Image" value={editingSettings.programmes_hero_image || ''} onChange={val => handleFieldChange('programmes_hero_image', val)} />
+              </div>
+            </div>
+          );
+        default:
+          return null;
+      }
+    };
+
+    const handleSavePage = async () => {
+      // Find what page settings we should save
+      const homeKeys = ['hero_title', 'hero_badge_text', 'hero_description', 'hero_rotator_words', 'hero_image', 'hero_widget_left_title', 'hero_widget_right_title', 'hero_widget_right_desc'];
+      const aboutKeys = ['about_title', 'about_tagline', 'about_description', 'about_extended', 'about_bullets', 'about_pull_quote', 'about_image', 'team_image', 'about_cta_image'];
+      const servicesKeys = ['cta_title', 'cta_discipline_highlight', 'cta_description', 'cta_image'];
+      const contactKeys = ['contact_email', 'contact_phone', 'contact_location', 'contact_hero_image', 'programmes_hero_image'];
+
+      let targetKeys: string[] = [];
+      if (selectedPage === 'home') targetKeys = homeKeys;
+      if (selectedPage === 'about') targetKeys = aboutKeys;
+      if (selectedPage === 'services') targetKeys = servicesKeys;
+      if (selectedPage === 'contact') targetKeys = contactKeys;
+
+      const payload: Record<string, string> = {};
+      targetKeys.forEach(k => {
+        payload[k] = editingSettings[k] || '';
+      });
+
+      await saveMultipleSettings(payload);
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-800">Page Content Management</h2>
+            <p className="text-slate-500 text-xs">Edit layout texts, visuals, rotator phrases, and bullets across your site.</p>
+          </div>
+          <button
+            onClick={handleSavePage}
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-yellow-500 text-slate-900 font-bold text-xs rounded-xl hover:scale-105 transition-all shadow-md"
+            style={{ backgroundColor: GOLD, color: NAVY }}
+          >
+            <Save size={14} /> Save Page Content
+          </button>
+        </div>
+
+        {/* Page selector buttons */}
+        <div className="flex border-b border-gray-200">
+          {(['home', 'about', 'services', 'contact'] as const).map(p => (
+            <button
+              key={p}
+              onClick={() => setSelectedPage(p)}
+              className={`px-6 py-3 font-bold text-xs uppercase tracking-wider border-b-2 transition-colors ${selectedPage === p ? 'border-yellow-600 text-yellow-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+              style={selectedPage === p ? { borderColor: GOLD, color: GOLD } : {}}
+            >
+              {p} Page
+            </button>
+          ))}
+        </div>
+
+        {/* Render Form */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          {renderPageFields()}
+        </div>
+      </div>
+    );
+  };
+
+  // 3. PROGRAMMES & REUSABLE MODULES VIEW
+  const ProgrammesView = () => {
+    // Helper to generate UUID for course modules
+    const generateUUID = () => {
+      return 'mod-' + Math.random().toString(36).substr(2, 9) + '-' + Math.random().toString(36).substr(2, 9);
+    };
+
+    return (
+      <div className="space-y-8">
+        {/* programmes crud catalogue */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Training Programmes</h2>
+              <p className="text-xs text-gray-500">Edit core training subjects visible in the training catalogue.</p>
+            </div>
+            <button
+              onClick={() => setEditingProgramme({ code: '', title: '', days: 2, category: 'General', is_active: true, is_featured: false, description: '' })}
+              className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:scale-105 transition-all"
+              style={{ backgroundColor: NAVY }}
+            >
+              <Plus size={14} /> Add Programme
+            </button>
+          </div>
+
+          {editingProgramme && (
+            <div className="bg-yellow-50 border border-yellow-200 p-5 rounded-2xl mb-4">
+              <h3 className="font-bold text-sm text-slate-800 mb-3">{editingProgramme.id ? 'Edit Programme Details' : 'Add New Programme to Catalogue'}</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Code</label>
+                  <input type="text" value={editingProgramme.code || ''} onChange={e => setEditingProgramme({ ...editingProgramme, code: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="e.g. LMT 101" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Category</label>
+                  <select value={editingProgramme.category || 'General'} onChange={e => setEditingProgramme({ ...editingProgramme, category: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm">
+                    {['Leadership', 'Customer Service', 'HSE', 'Finance', 'Digital', 'General'].map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Programme Title</label>
+                  <input type="text" value={editingProgramme.title || ''} onChange={e => setEditingProgramme({ ...editingProgramme, title: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Duration (Days)</label>
+                  <input type="number" min={1} value={editingProgramme.days || 1} onChange={e => setEditingProgramme({ ...editingProgramme, days: parseInt(e.target.value) })} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Brief Description</label>
+                  <textarea rows={2} value={editingProgramme.description || ''} onChange={e => setEditingProgramme({ ...editingProgramme, description: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <button onClick={() => setEditingProgramme(null)} className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700">Cancel</button>
+                <button onClick={() => saveProgramme(editingProgramme)} className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg" style={{ backgroundColor: NAVY }}>Save</button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2 max-h-96 overflow-y-auto bg-white p-4 rounded-xl border border-gray-100">
+            {programmes.map(prog => (
+              <div key={prog.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-150 hover:bg-slate-50">
+                <div className="text-left">
+                  <div className="flex gap-2 items-center mb-1 flex-wrap">
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800">{prog.code}</span>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800" style={{ color: '#8a6b1e', background: `${GOLD}22` }}>{prog.category}</span>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600">{prog.days} Days</span>
+                    {prog.is_featured && <span className="text-[9px] font-extrabold text-yellow-600 uppercase">★ Featured</span>}
+                  </div>
+                  <h4 className="text-xs font-bold text-slate-800">{prog.title}</h4>
+                </div>
+                <div className="flex gap-1.5">
+                  <button onClick={() => toggleProgrammeFeatured(prog.id, prog.is_featured)} className="p-1.5 hover:bg-gray-100 rounded text-slate-500" title="Toggle Featured status">
+                    <Star size={14} className={prog.is_featured ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'} />
+                  </button>
+                  <button onClick={() => toggleProgrammeActive(prog.id, prog.is_active)} className="p-1.5 hover:bg-gray-100 rounded" title="Toggle Visibility">
+                    {prog.is_active ? <Eye size={14} className="text-green-600" /> : <EyeOff size={14} className="text-gray-400" />}
+                  </button>
+                  <button onClick={() => setEditingProgramme(prog)} className="p-1.5 hover:bg-gray-100 rounded" title="Edit text">
+                    <Edit3 size={14} className="text-yellow-600" />
+                  </button>
+                  <button onClick={() => deleteProgramme(prog.id)} className="p-1.5 hover:bg-red-50 rounded text-red-500" title="Delete">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Reusable modules section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">Reusable Course Modules</h2>
+              <p className="text-xs text-gray-500">Manage fine-grained training blocks that can be shared across classes.</p>
+            </div>
+            <button
+              onClick={() => setEditingModule({ id: generateUUID(), code: '', title: '', description: '', duration: '3 Hours' })}
+              className="flex items-center gap-1.5 px-4 py-2 bg-yellow-500 text-slate-900 rounded-lg text-xs font-bold hover:scale-105 transition-all"
+              style={{ backgroundColor: GOLD, color: NAVY }}
+            >
+              <Plus size={14} /> Add Course Module
+            </button>
+          </div>
+
+          {editingModule && (
+            <div className="bg-yellow-50 border border-yellow-200 p-5 rounded-2xl mb-4">
+              <h3 className="font-bold text-sm text-slate-800 mb-3">{editingModule.title ? 'Edit Course Module' : 'Create Course Module'}</h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Module Code</label>
+                  <input type="text" value={editingModule.code || ''} onChange={e => setEditingModule({ ...editingModule, code: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="e.g. MOD-LMT-01" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Module Title</label>
+                  <input type="text" value={editingModule.title || ''} onChange={e => setEditingModule({ ...editingModule, title: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Average Duration</label>
+                  <input type="text" value={editingModule.duration || ''} onChange={e => setEditingModule({ ...editingModule, duration: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="e.g. 3 Hours or 1 Day" />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Detailed Syllabus / Focus Description</label>
+                  <textarea rows={2} value={editingModule.description || ''} onChange={e => setEditingModule({ ...editingModule, description: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button onClick={() => setEditingModule(null)} className="px-4 py-2 text-xs font-bold text-gray-500">Cancel</button>
+                <button onClick={() => saveCourseModule(editingModule)} className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg" style={{ backgroundColor: NAVY }}>Save Module</button>
+              </div>
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {courseModules.length === 0 ? (
+              <div className="md:col-span-2 text-center py-8 bg-white rounded-xl border text-xs text-gray-400">
+                No course modules catalogued. Create a new module using the button above.
+              </div>
+            ) : (
+              courseModules.map(mod => (
+                <div key={mod.id} className="bg-white p-5 rounded-2xl border border-gray-150 hover:shadow-md transition-shadow relative text-left">
+                  <span className="absolute top-4 right-4 text-[9px] font-bold px-2 py-0.5 rounded bg-gray-150 text-gray-600">{mod.duration}</span>
+                  <div className="text-[10px] font-bold text-custom-secondary mb-1 uppercase tracking-wider">{mod.code || 'NO CODE'}</div>
+                  <h4 className="font-bold text-slate-800 text-sm mb-2">{mod.title || 'Untitled Module'}</h4>
+                  <p className="text-gray-500 text-xs leading-relaxed mb-4 line-clamp-2">{mod.description || 'No syllabus provided.'}</p>
+                  
+                  <div className="flex justify-end gap-2 border-t pt-3">
+                    <button onClick={() => setEditingModule(mod)} className="text-xs font-bold text-custom-secondary hover:underline flex items-center gap-0.5"><Edit3 size={12} /> Edit</button>
+                    <button onClick={() => deleteCourseModule(mod.id)} className="text-xs font-bold text-red-500 hover:underline flex items-center gap-0.5"><Trash2 size={12} /> Delete</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 4. DESIGN SYSTEM EDIT TAB
+  const DesignSystemView = () => {
+    // Current design settings
+    const ds = editingSettings.design_system ? JSON.parse(editingSettings.design_system) : {
+      primary_color: '#0F2044',
+      secondary_color: '#C9A84C',
+      accent_color: '#F3F4F6',
+      font_family: 'Inter',
+      base_font_size: '16px',
+      spacing_density: 'comfortable',
+      button_preset: 'rounded'
+    };
+
+    const handleDSChange = (key: string, val: string) => {
+      const updatedDS = { ...ds, [key]: val };
+      setEditingSettings(prev => ({ ...prev, design_system: JSON.stringify(updatedDS) }));
+    };
+
+    const saveDSTokens = async () => {
+      await saveSettingKey('design_system', JSON.stringify(ds));
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">Dynamic Design System Controls</h2>
+            <p className="text-xs text-gray-500">Inject dynamic CSS variables to alter colors, buttons, fonts, and space densities across Enka Prime.</p>
+          </div>
+          <button
+            onClick={saveDSTokens}
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-yellow-500 text-slate-900 font-bold text-xs rounded-xl hover:scale-105 transition-all shadow-md"
+            style={{ backgroundColor: GOLD, color: NAVY }}
+          >
+            <Palette size={14} /> Inject CSS Design Tokens
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-left">
+          {/* Color palette */}
+          <div className="space-y-4">
+            <h3 className="font-bold text-slate-800 text-sm border-b pb-2 mb-3">Color Palette System</h3>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Primary Color (Nav, Footer, Strong Headers)</label>
+              <div className="flex gap-2">
+                <input type="color" value={ds.primary_color || '#0F2044'} onChange={e => handleDSChange('primary_color', e.target.value)} className="w-10 h-10 border rounded cursor-pointer" />
+                <input type="text" value={ds.primary_color || ''} onChange={e => handleDSChange('primary_color', e.target.value)} className="flex-1 px-3 py-2 border rounded-lg text-sm uppercase" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Secondary Brand Color (Gold Accent, Buttons, Active Highlights)</label>
+              <div className="flex gap-2">
+                <input type="color" value={ds.secondary_color || '#C9A84C'} onChange={e => handleDSChange('secondary_color', e.target.value)} className="w-10 h-10 border rounded cursor-pointer" />
+                <input type="text" value={ds.secondary_color || ''} onChange={e => handleDSChange('secondary_color', e.target.value)} className="flex-1 px-3 py-2 border rounded-lg text-sm uppercase" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Light Accent Color (Cards, Section backgrounds)</label>
+              <div className="flex gap-2">
+                <input type="color" value={ds.accent_color || '#F3F4F6'} onChange={e => handleDSChange('accent_color', e.target.value)} className="w-10 h-10 border rounded cursor-pointer" />
+                <input type="text" value={ds.accent_color || ''} onChange={e => handleDSChange('accent_color', e.target.value)} className="flex-1 px-3 py-2 border rounded-lg text-sm uppercase" />
+              </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      <div className="mt-6 flex justify-end">
-        <button onClick={saveSettings}
-          className="flex items-center gap-2 px-6 py-3 font-bold text-sm rounded-lg transition-all hover:scale-105"
-          style={{ background: GOLD, color: NAVY }}>
-          <Save size={16} /> Save All Settings
-        </button>
-      </div>
-    </div>
-  );
+          {/* Typography */}
+          <div className="space-y-4">
+            <h3 className="font-bold text-slate-800 text-sm border-b pb-2 mb-3">Typography & Font Scales</h3>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Font Family</label>
+              <select value={ds.font_family || 'Inter'} onChange={e => handleDSChange('font_family', e.target.value)} className="w-full px-3 py-2.5 rounded-lg border text-sm">
+                {['Inter', 'Roboto', 'Outfit', 'Playfair Display', 'Montserrat', 'Syne'].map(font => (
+                  <option key={font} value={font}>{font}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Base Font Size</label>
+              <select value={ds.base_font_size || '16px'} onChange={e => handleDSChange('base_font_size', e.target.value)} className="w-full px-3 py-2.5 rounded-lg border text-sm">
+                {['14px', '15px', '16px', '17px', '18px'].map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-  const ServiceForm = ({ svc, onSave, onCancel }: { svc: Partial<Service>; onSave: (s: Partial<Service>) => void; onCancel: () => void }) => {
-    const [form, setForm] = useState(svc);
-    return (
-      <div className="bg-yellow-50 rounded-xl border-2 border-yellow-200 p-5 mb-4">
-        <h4 className="font-bold text-sm mb-4" style={{ color: NAVY }}>{svc.id ? 'Edit Service' : 'New Service'}</h4>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Code</label>
-            <input value={form.code || ''} onChange={e => setForm({ ...form, code: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
+          {/* Sizing, spacing & button styles */}
+          <div className="space-y-4 md:col-span-2">
+            <h3 className="font-bold text-slate-800 text-sm border-b pb-2 mb-3">Interface Density & Shape Presets</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Spacing Density</label>
+                <div className="flex gap-2">
+                  {(['compact', 'comfortable', 'loose'] as const).map(density => (
+                    <button
+                      key={density}
+                      onClick={() => handleDSChange('spacing_density', density)}
+                      className={`flex-1 py-2 font-bold text-xs uppercase tracking-wide border rounded-xl capitalize ${ds.spacing_density === density ? 'bg-slate-900 border-slate-900 text-white' : 'bg-gray-50 border-gray-200 text-slate-600 hover:bg-gray-100'}`}
+                      style={ds.spacing_density === density ? { background: NAVY } : {}}
+                    >
+                      {density}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Button Style Shape Preset</label>
+                <div className="flex gap-2">
+                  {(['square', 'rounded', 'rounded-lg', 'pill'] as const).map(preset => (
+                    <button
+                      key={preset}
+                      onClick={() => handleDSChange('button_preset', preset)}
+                      className={`flex-1 py-2 font-bold text-xs uppercase tracking-wide border rounded-xl capitalize ${ds.button_preset === preset ? 'bg-slate-900 border-slate-900 text-white' : 'bg-gray-50 border-gray-200 text-slate-600 hover:bg-gray-100'}`}
+                      style={ds.button_preset === preset ? { background: NAVY } : {}}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Title</label>
-            <input value={form.title || ''} onChange={e => setForm({ ...form, title: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Short Description</label>
-            <textarea rows={2} value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Full Description</label>
-            <textarea rows={3} value={form.full_description || ''} onChange={e => setForm({ ...form, full_description: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Image URL</label>
-            <input value={form.image_url || ''} onChange={e => setForm({ ...form, image_url: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Sort Order</label>
-            <input type="number" value={form.sort_order || 0} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 mt-4">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-800">Cancel</button>
-          <button onClick={() => onSave(form)}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-bold rounded-lg text-white"
-            style={{ background: NAVY }}>
-            <Save size={14} /> Save
-          </button>
         </div>
       </div>
     );
   };
 
-  const ServicesView = () => (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold" style={{ color: NAVY }}>Services</h2>
-        <button onClick={() => setShowNewService(true)}
-          className="flex items-center gap-2 px-5 py-2.5 font-bold text-sm rounded-lg transition-all hover:scale-105"
-          style={{ background: GOLD, color: NAVY }}>
-          <Plus size={16} /> Add Service
-        </button>
-      </div>
+  // 5. NAVIGATION MANAGER TAB
+  const NavigationManagerView = () => {
+    // Current navigation state
+    const currentMenu: any[] = editingSettings.navigation_menu ? JSON.parse(editingSettings.navigation_menu) : [
+      { id: '1', label: 'Home', href: 'home', link_type: 'page', is_active: true },
+      { id: '2', label: 'Services', href: 'services', link_type: 'page', is_active: true },
+      { id: '3', label: 'Programmes', href: 'programmes', link_type: 'page', is_active: true },
+      { id: '4', label: 'About', href: 'about', link_type: 'page', is_active: true },
+      { id: '5', label: 'Contact', href: 'contact', link_type: 'page', is_active: true },
+    ];
 
-      {showNewService && (
-        <ServiceForm
-          svc={{ code: '', title: '', description: '', full_description: '', image_url: '', sort_order: services.length + 1, is_active: true }}
-          onSave={saveService}
-          onCancel={() => setShowNewService(false)}
-        />
-      )}
+    const [editingLink, setEditingLink] = useState<any | null>(null);
 
-      <div className="space-y-3">
-        {services.map(svc => (
-          <div key={svc.id}>
-            {editingService?.id === svc.id ? (
-              <ServiceForm svc={svc} onSave={saveService} onCancel={() => setEditingService(null)} />
-            ) : (
-              <div className={`bg-white rounded-xl border p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${svc.is_active ? 'border-gray-100' : 'border-gray-200 opacity-60'}`}>
-                {svc.image_url && (
-                  <img src={svc.image_url} alt={svc.title} className="w-20 h-14 rounded-lg object-cover flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `${NAVY}0d`, color: NAVY }}>{svc.code}</span>
-                    <span className="font-semibold text-sm" style={{ color: NAVY }}>{svc.title}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 truncate">{svc.description}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => toggleServiceActive(svc.id, svc.is_active)} title={svc.is_active ? 'Deactivate' : 'Activate'}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    {svc.is_active ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-gray-400" />}
-                  </button>
-                  <button onClick={() => setEditingService(svc)} title="Edit"
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Edit3 size={16} style={{ color: GOLD }} />
-                  </button>
-                  <button onClick={() => deleteService(svc.id)} title="Delete"
-                    className="p-2 rounded-lg hover:bg-red-50 transition-colors">
-                    <Trash2 size={16} className="text-red-500" />
-                  </button>
+    const saveNavigationMenu = async (updatedMenu: any[]) => {
+      setEditingSettings(prev => ({ ...prev, navigation_menu: JSON.stringify(updatedMenu) }));
+      await saveSettingKey('navigation_menu', JSON.stringify(updatedMenu));
+    };
+
+    const handleMove = async (idx: number, direction: 'up' | 'down') => {
+      const updated = [...currentMenu];
+      if (direction === 'up' && idx > 0) {
+        [updated[idx], updated[idx - 1]] = [updated[idx - 1], updated[idx]];
+      } else if (direction === 'down' && idx < updated.length - 1) {
+        [updated[idx], updated[idx + 1]] = [updated[idx + 1], updated[idx]];
+      }
+      await saveNavigationMenu(updated);
+    };
+
+    const handleSaveLink = async (link: any) => {
+      let updated = [...currentMenu];
+      const idx = updated.findIndex(l => l.id === link.id);
+      if (idx >= 0) {
+        updated[idx] = link;
+      } else {
+        updated.push(link);
+      }
+      setEditingLink(null);
+      await saveNavigationMenu(updated);
+    };
+
+    const handleDeleteLink = async (id: string) => {
+      if (!confirm('Remove this navigation item?')) return;
+      const updated = currentMenu.filter(l => l.id !== id);
+      await saveNavigationMenu(updated);
+    };
+
+    const toggleLinkActive = async (link: any) => {
+      const updated = currentMenu.map(l => l.id === link.id ? { ...l, is_active: !l.is_active } : l);
+      await saveNavigationMenu(updated);
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">Navigation Menu Manager</h2>
+            <p className="text-xs text-gray-500">Reorder, add, or toggle page, section anchor, or external links globally.</p>
+          </div>
+          <button
+            onClick={() => setEditingLink({ id: 'nav-' + Math.random().toString(36).substr(2, 9), label: '', href: '', link_type: 'page', is_active: true })}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:scale-105 transition-all animate-glow"
+            style={{ backgroundColor: NAVY }}
+          >
+            <Plus size={14} /> Add Menu Link
+          </button>
+        </div>
+
+        {editingLink && (
+          <div className="bg-yellow-50 border border-yellow-250 p-5 rounded-2xl text-left">
+            <h3 className="font-bold text-sm text-slate-800 mb-3">Navigation Menu Item Form</h3>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Display Label</label>
+                <input type="text" value={editingLink.label || ''} onChange={e => setEditingLink({ ...editingLink, label: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="e.g. Courses" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Link Target (href)</label>
+                <input type="text" value={editingLink.href || ''} onChange={e => setEditingLink({ ...editingLink, href: e.target.value })} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="e.g. programmes or #services" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Link Destination Type</label>
+                <select value={editingLink.link_type || 'page'} onChange={e => setEditingLink({ ...editingLink, link_type: e.target.value })} className="w-full px-3 py-2.5 rounded-lg border text-sm">
+                  <option value="page">Standard page</option>
+                  <option value="section">Homepage Anchor (#id)</option>
+                  <option value="external">External Website (opens in new tab)</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setEditingLink(null)} className="px-4 py-2 text-xs font-bold text-gray-500">Cancel</button>
+              <button onClick={() => handleSaveLink(editingLink)} className="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg" style={{ backgroundColor: NAVY }}>Save Link</button>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white p-4 rounded-xl border border-gray-150 space-y-2">
+          {currentMenu.map((link, idx) => (
+            <div key={link.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-100 hover:bg-slate-50">
+              <div className="flex items-center gap-4 text-left">
+                <span className="text-[10px] font-bold text-gray-400 w-4">#{idx + 1}</span>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">{link.label}</h4>
+                  <p className="text-[10px] text-gray-400 font-medium font-mono truncate max-w-sm">
+                    {link.link_type === 'external' ? '🌐 External' : link.link_type === 'section' ? '⚓ Anchor' : '📄 Page'} • href: {link.href}
+                  </p>
                 </div>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
-  const ProgrammeForm = ({ prog, onSave, onCancel }: { prog: Partial<Programme>; onSave: (p: Partial<Programme>) => void; onCancel: () => void }) => {
-    const [form, setForm] = useState(prog);
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => handleMove(idx, 'up')} disabled={idx === 0} className="p-1.5 hover:bg-gray-100 rounded text-slate-500 disabled:opacity-30">
+                  <ArrowUp size={14} />
+                </button>
+                <button onClick={() => handleMove(idx, 'down')} disabled={idx === currentMenu.length - 1} className="p-1.5 hover:bg-gray-100 rounded text-slate-500 disabled:opacity-30">
+                  <ArrowDown size={14} />
+                </button>
+                <button onClick={() => toggleLinkActive(link)} className="p-1.5 hover:bg-gray-100 rounded">
+                  {link.is_active !== false ? <Eye size={14} className="text-green-600" /> : <EyeOff size={14} className="text-gray-400" />}
+                </button>
+                <button onClick={() => setEditingLink(link)} className="p-1.5 hover:bg-gray-100 rounded text-yellow-600">
+                  <Edit3 size={14} />
+                </button>
+                <button onClick={() => handleDeleteLink(link.id)} className="p-1.5 hover:bg-red-50 rounded text-red-500">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // 6. HOMEPAGE BUILDER TAB
+  const HomepageBuilderView = () => {
+    // Current layout structure
+    const currentModules: any[] = editingSettings.homepage_modules ? JSON.parse(editingSettings.homepage_modules) : [
+      { id: 'hero', type: 'hero', is_visible: true },
+      { id: 'cta', type: 'cta', is_visible: true },
+      { id: 'about_preview', type: 'about_preview', is_visible: true },
+      { id: 'services', type: 'services', is_visible: true },
+      { id: 'industries', type: 'industries', is_visible: true },
+      { id: 'why_choose_us', type: 'why_choose_us', is_visible: true }
+    ];
+
+    const saveModulesLayout = async (updated: any[]) => {
+      setEditingSettings(prev => ({ ...prev, homepage_modules: JSON.stringify(updated) }));
+      await saveSettingKey('homepage_modules', JSON.stringify(updated));
+    };
+
+    const handleMove = async (idx: number, direction: 'up' | 'down') => {
+      const updated = [...currentModules];
+      if (direction === 'up' && idx > 0) {
+        [updated[idx], updated[idx - 1]] = [updated[idx - 1], updated[idx]];
+      } else if (direction === 'down' && idx < updated.length - 1) {
+        [updated[idx], updated[idx + 1]] = [updated[idx + 1], updated[idx]];
+      }
+      await saveModulesLayout(updated);
+    };
+
+    const toggleVisibility = async (idx: number) => {
+      const updated = [...currentModules];
+      updated[idx].is_visible = !updated[idx].is_visible;
+      await saveModulesLayout(updated);
+    };
+
+    const getModuleName = (type: string) => {
+      const map: Record<string, string> = {
+        hero: 'Hero Rotator & Visual Dashboard',
+        cta: 'Subject Catalog / Discipline Action CTA',
+        about_preview: 'About preview & Pull quotes',
+        services: 'Interactive Capabilities Grid',
+        industries: 'Premium Industries grid',
+        why_choose_us: 'Advantage & Commitment grid'
+      };
+      return map[type] || type.toUpperCase();
+    };
+
     return (
-      <div className="bg-yellow-50 rounded-xl border-2 border-yellow-200 p-5 mb-4">
-        <h4 className="font-bold text-sm mb-4" style={{ color: NAVY }}>{prog.id ? 'Edit Programme' : 'New Programme'}</h4>
-        <div className="grid md:grid-cols-2 gap-4">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">Homepage Module Builder</h2>
+          <p className="text-xs text-gray-500">Reorder visual sections, toggle block visibilities, and edit content instantly.</p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-gray-150 space-y-2">
+          {currentModules.map((mod, idx) => (
+            <div key={mod.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-100 hover:bg-slate-50">
+              <div className="flex items-center gap-4 text-left">
+                <span className="text-[10px] font-bold text-gray-400 w-4">#{idx + 1}</span>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 capitalize">{mod.type.replace(/_/g, ' ')}</h4>
+                  <p className="text-[10px] text-gray-500 font-medium font-mono">{getModuleName(mod.type)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleMove(idx, 'up')} disabled={idx === 0} className="p-1.5 hover:bg-gray-100 rounded text-slate-500 disabled:opacity-30">
+                  <ArrowUp size={14} />
+                </button>
+                <button onClick={() => handleMove(idx, 'down')} disabled={idx === currentModules.length - 1} className="p-1.5 hover:bg-gray-100 rounded text-slate-500 disabled:opacity-30">
+                  <ArrowDown size={14} />
+                </button>
+                <button onClick={() => toggleVisibility(idx)} className="p-1.5 hover:bg-gray-100 rounded text-slate-500">
+                  {mod.is_visible !== false ? <Eye size={14} className="text-green-600" /> : <EyeOff size={14} className="text-gray-400" />}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // 7. FOOTER EDIT TAB
+  const FooterEditView = () => {
+    // Current state
+    const footerConfig = editingSettings.footer_config ? JSON.parse(editingSettings.footer_config) : {
+      description: 'Professional corporate training that transforms people and organisations.',
+      contact_email: editingSettings.contact_email || 'info@enkaprime.com',
+      contact_phone: editingSettings.contact_phone || '0200 769 146',
+      linkedin_url: 'https://linkedin.com/company/enkaprime',
+      copyright_text: '© 2026 Enka Prime Consulting Ltd. All rights reserved.',
+      tagline: editingSettings.about_tagline || 'Empowering People. Enhancing Performance. Delivering Excellence.'
+    };
+
+    const handleFooterChange = (key: string, val: string) => {
+      const updated = { ...footerConfig, [key]: val };
+      setEditingSettings(prev => ({ ...prev, footer_config: JSON.stringify(updated) }));
+    };
+
+    const saveFooterSettings = async () => {
+      await saveSettingKey('footer_config', JSON.stringify(footerConfig));
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Code</label>
-            <input value={form.code || ''} onChange={e => setForm({ ...form, code: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
+            <h2 className="text-xl font-bold text-slate-800">Footer Settings</h2>
+            <p className="text-xs text-gray-500">Edit contact details, copyright notices, and LinkedIn company URLs globally.</p>
+          </div>
+          <button
+            onClick={saveFooterSettings}
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-yellow-500 text-slate-900 font-bold text-xs rounded-xl hover:scale-105 transition-all shadow-md"
+            style={{ backgroundColor: GOLD, color: NAVY }}
+          >
+            <Layers size={14} /> Save Footer Config
+          </button>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-left grid md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Company Description (Appears bottom left)</label>
+            <textarea rows={2} value={footerConfig.description || ''} onChange={e => handleFooterChange('description', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Category</label>
-            <select value={form.category || 'General'} onChange={e => setForm({ ...form, category: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500">
-              {['Leadership', 'Customer Service', 'HSE', 'Finance', 'Digital', 'General'].map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Footer Email</label>
+            <input type="email" value={footerConfig.contact_email || ''} onChange={e => handleFooterChange('contact_email', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Footer Phone</label>
+            <input type="text" value={footerConfig.contact_phone || ''} onChange={e => handleFooterChange('contact_phone', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">LinkedIn URL</label>
+            <input type="text" value={footerConfig.linkedin_url || ''} onChange={e => handleFooterChange('linkedin_url', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="https://linkedin.com/company/..." />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Footer Tagline</label>
+            <input type="text" value={footerConfig.tagline || ''} onChange={e => handleFooterChange('tagline', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Title</label>
-            <input value={form.title || ''} onChange={e => setForm({ ...form, title: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Copyright Notice text</label>
+            <input type="text" value={footerConfig.copyright_text || ''} onChange={e => handleFooterChange('copyright_text', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Duration (days)</label>
-            <input type="number" min={1} value={form.days || 1} onChange={e => setForm({ ...form, days: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Description</label>
-            <textarea rows={2} value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 mt-4">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-800">Cancel</button>
-          <button onClick={() => onSave(form)}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-bold rounded-lg text-white"
-            style={{ background: NAVY }}>
-            <Save size={14} /> Save
-          </button>
         </div>
       </div>
     );
   };
 
-  const ProgrammesView = () => (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold" style={{ color: NAVY }}>Programmes</h2>
-        <button onClick={() => setShowNewProgramme(true)}
-          className="flex items-center gap-2 px-5 py-2.5 font-bold text-sm rounded-lg transition-all hover:scale-105"
-          style={{ background: GOLD, color: NAVY }}>
-          <Plus size={16} /> Add Programme
-        </button>
-      </div>
+  // 8. GENERAL SETTINGS TAB (Central Key-Value Fallback)
+  const GeneralSettingsView = () => {
+    const handleFieldChange = (key: string, val: string) => {
+      setEditingSettings(prev => ({ ...prev, [key]: val }));
+    };
 
-      {showNewProgramme && (
-        <ProgrammeForm
-          prog={{ code: '', title: '', days: 2, category: 'General', is_active: true, is_featured: false, description: '' }}
-          onSave={saveProgramme}
-          onCancel={() => setShowNewProgramme(false)}
-        />
-      )}
+    const handleSaveAllGeneral = async () => {
+      const changed: Record<string, string> = {};
+      Object.keys(editingSettings).forEach(k => {
+        if (editingSettings[k] !== originalSettings[k]) {
+          changed[k] = editingSettings[k];
+        }
+      });
+      if (Object.keys(changed).length === 0) {
+        showToast('No changed fields to save');
+        return;
+      }
+      await saveMultipleSettings(changed);
+    };
 
-      <div className="space-y-3">
-        {programmes.map(prog => (
-          <div key={prog.id}>
-            {editingProgramme?.id === prog.id ? (
-              <ProgrammeForm prog={prog} onSave={saveProgramme} onCancel={() => setEditingProgramme(null)} />
-            ) : (
-              <div className={`bg-white rounded-xl border p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${prog.is_active ? 'border-gray-100' : 'border-gray-200 opacity-60'}`}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `${NAVY}0d`, color: NAVY }}>{prog.code}</span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: `${GOLD}22`, color: '#8a6b1e' }}>{prog.category}</span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">{prog.days} {prog.days === 1 ? 'day' : 'days'}</span>
-                    {prog.is_featured && <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `${GOLD}44`, color: GOLD }}>Featured</span>}
-                  </div>
-                  <p className="font-semibold text-sm" style={{ color: NAVY }}>{prog.title}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => toggleProgrammeFeatured(prog.id, prog.is_featured)} title={prog.is_featured ? 'Unfeature' : 'Feature'}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Star size={16} className={prog.is_featured ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'} />
-                  </button>
-                  <button onClick={() => toggleProgrammeActive(prog.id, prog.is_active)} title={prog.is_active ? 'Deactivate' : 'Activate'}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    {prog.is_active ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-gray-400" />}
-                  </button>
-                  <button onClick={() => setEditingProgramme(prog)} title="Edit"
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Edit3 size={16} style={{ color: GOLD }} />
-                  </button>
-                  <button onClick={() => deleteProgramme(prog.id)} title="Delete"
-                    className="p-2 rounded-lg hover:bg-red-50 transition-colors">
-                    <Trash2 size={16} className="text-red-500" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const StatForm = ({ stat, onSave, onCancel }: { stat: Partial<Stat>; onSave: (s: Partial<Stat>) => void; onCancel: () => void }) => {
-    const [form, setForm] = useState(stat);
     return (
-      <div className="bg-yellow-50 rounded-xl border-2 border-yellow-200 p-5 mb-4">
-        <h4 className="font-bold text-sm mb-4" style={{ color: NAVY }}>{stat.id ? 'Edit Stat' : 'New Stat'}</h4>
-        <div className="grid md:grid-cols-3 gap-4">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Value</label>
-            <input value={form.value || ''} onChange={e => setForm({ ...form, value: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" placeholder="500+" />
+            <h2 className="text-xl font-bold text-slate-800">General Key-Value Store</h2>
+            <p className="text-xs text-gray-500">Edit raw site configuration fallback strings directly.</p>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Label</label>
-            <input value={form.label || ''} onChange={e => setForm({ ...form, label: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" placeholder="Professionals Trained" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Sort Order</label>
-            <input type="number" value={form.sort_order || 0} onChange={e => setForm({ ...form, sort_order: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-yellow-500" />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 mt-4">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-800">Cancel</button>
-          <button onClick={() => onSave(form)}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-bold rounded-lg text-white"
-            style={{ background: NAVY }}>
-            <Save size={14} /> Save
+          <button
+            onClick={handleSaveAllGeneral}
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-yellow-500 text-slate-900 font-bold text-xs rounded-xl hover:scale-105 transition-all shadow-md"
+            style={{ backgroundColor: GOLD, color: NAVY }}
+          >
+            <Save size={14} /> Save Fallback Settings
           </button>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4 max-h-[500px] overflow-y-auto">
+          {Object.keys(editingSettings).filter(k => !['design_system', 'navigation_menu', 'homepage_modules', 'footer_config', 'course_modules'].includes(k)).map(key => (
+            <div key={key} className="text-left">
+              <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">{key.replace(/_/g, ' ')}</label>
+              {key.includes('image') || key.includes('logo') ? (
+                <ImageUploadField label={key.replace(/_/g, ' ')} value={editingSettings[key] || ''} onChange={val => handleFieldChange(key, val)} />
+              ) : key.includes('description') || key.includes('extended') || key.includes('pull_quote') || key.includes('bullets') ? (
+                <textarea rows={3} value={editingSettings[key] || ''} onChange={e => handleFieldChange(key, e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+              ) : (
+                <input type="text" value={editingSettings[key] || ''} onChange={e => handleFieldChange(key, e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
     );
   };
-
-  const StatsView = () => (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold" style={{ color: NAVY }}>Statistics</h2>
-        <button onClick={() => setShowNewStat(true)}
-          className="flex items-center gap-2 px-5 py-2.5 font-bold text-sm rounded-lg transition-all hover:scale-105"
-          style={{ background: GOLD, color: NAVY }}>
-          <Plus size={16} /> Add Stat
-        </button>
-      </div>
-
-      {showNewStat && (
-        <StatForm
-          stat={{ value: '', label: '', sort_order: stats.length + 1, is_active: true }}
-          onSave={saveStat}
-          onCancel={() => setShowNewStat(false)}
-        />
-      )}
-
-      <div className="space-y-3">
-        {stats.map(stat => (
-          <div key={stat.id}>
-            {editingStat?.id === stat.id ? (
-              <StatForm stat={stat} onSave={saveStat} onCancel={() => setEditingStat(null)} />
-            ) : (
-              <div className={`bg-white rounded-xl border p-5 flex items-center gap-4 ${stat.is_active ? 'border-gray-100' : 'border-gray-200 opacity-60'}`}>
-                <div className="text-2xl font-bold flex-shrink-0 min-w-[80px]" style={{ color: GOLD }}>{stat.value}</div>
-                <div className="flex-1">
-                  <span className="font-semibold text-sm" style={{ color: NAVY }}>{stat.label}</span>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => toggleStatActive(stat.id, stat.is_active)} title={stat.is_active ? 'Deactivate' : 'Activate'}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    {stat.is_active ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-gray-400" />}
-                  </button>
-                  <button onClick={() => setEditingStat(stat)} title="Edit"
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <Edit3 size={16} style={{ color: GOLD }} />
-                  </button>
-                  <button onClick={() => deleteStat(stat.id)} title="Delete"
-                    className="p-2 rounded-lg hover:bg-red-50 transition-colors">
-                    <Trash2 size={16} className="text-red-500" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      <Sidebar />
+      {/* Main Sidebar */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 flex flex-col transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ background: NAVY }}>
+        <div className="p-5 border-b border-white/10">
+          <img src="/enkaprime/enkaprime-logo.png" alt="Enka Prime" className="h-10 object-contain" />
+          <div className="text-[10px] mt-2 font-bold text-custom-secondary uppercase tracking-wider" style={{ color: GOLD }}>CMS Admin System</div>
+        </div>
 
-      <div className="flex-1 min-h-screen">
-        {/* Top bar */}
-        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
+        <nav className="flex-1 py-4 overflow-y-auto">
+          {TAB_CONFIG.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => { setActiveTab(tab.key); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-5 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === tab.key ? 'text-white' : 'text-blue-300 hover:text-white'}`}
+                style={activeTab === tab.key ? { background: `${GOLD}20`, borderRight: `3px solid ${GOLD}` } : {}}
+              >
+                <Icon size={16} /> {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-white/10 text-left">
+          <div className="text-blue-300 text-xs mb-3 truncate font-medium">{session.user.email}</div>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-red-300 hover:bg-red-950/30 transition-colors">
+            <LogOut size={14} /> Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Body content */}
+      <div className="flex-1 min-h-screen flex flex-col">
+        <header className="bg-white border-b border-gray-150 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-gray-100">
               <Menu size={20} />
             </button>
-            <h1 className="text-lg font-bold" style={{ color: NAVY }}>
-              {TAB_CONFIG.find(t => t.key === activeTab)?.label || 'Admin'}
+            <h1 className="text-lg font-bold text-slate-800 uppercase tracking-wide">
+              {TAB_CONFIG.find(t => t.key === activeTab)?.label}
             </h1>
           </div>
+
           <div className="flex items-center gap-3">
-            <button onClick={() => loadData()}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Refresh data">
-              <RefreshCw size={18} className="text-gray-500" />
+            <button onClick={loadAllData} className="p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Sync database stats">
+              <RefreshCw size={16} className="text-gray-500" />
             </button>
-            <button onClick={() => onNavigate('home')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-100 transition-colors text-gray-600">
-              <ArrowLeft size={14} /> View Site
+            <button onClick={() => onNavigate('home')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-100 text-slate-600 border border-gray-200 shadow-sm">
+              <ArrowLeft size={13} /> View Site
             </button>
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="p-6 max-w-5xl">
+        <main className="p-6 flex-1 max-w-6xl w-full mx-auto">
           {activeTab === 'dashboard' && <DashboardView />}
-          {activeTab === 'settings' && <SettingsView />}
-          {activeTab === 'services' && <ServicesView />}
+          {activeTab === 'pages' && <PagesView />}
           {activeTab === 'programmes' && <ProgrammesView />}
-          {activeTab === 'stats' && <StatsView />}
+          {activeTab === 'design_system' && <DesignSystemView />}
+          {activeTab === 'navigation' && <NavigationManagerView />}
+          {activeTab === 'homepage_builder' && <HomepageBuilderView />}
+          {activeTab === 'footer' && <FooterEditView />}
+          {activeTab === 'settings' && <GeneralSettingsView />}
         </main>
       </div>
 
-      {/* Toast notification */}
       {toast && (
-        <div className={`fixed bottom-6 right-6 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-sm font-semibold z-50 transition-all ${
-          toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-        }`}>
-          {toast.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-          {toast.message}
+        <div className={`fixed bottom-6 right-6 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-xs font-bold z-50 transition-all ${toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+          {toast.type === 'success' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+          {toast.message.toUpperCase()}
         </div>
       )}
     </div>

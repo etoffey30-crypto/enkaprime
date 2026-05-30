@@ -8,7 +8,6 @@ import Home from './pages/Home';
 import Services from './pages/Services';
 import About from './pages/About';
 import Admin from './pages/Admin';
-import AdminCMS from './pages/AdminCMS';
 
 const NAV_LINKS = [
   { label: 'Home', href: 'home' },
@@ -62,6 +61,114 @@ export default function App() {
 
   useEffect(() => { loadPublicData(); }, [loadPublicData]);
 
+  // Dynamic Design System Variable & Font Injection
+  useEffect(() => {
+    try {
+      const ds = dbSettings.design_system ? JSON.parse(dbSettings.design_system) : {};
+      
+      const primary = ds.primary_color || '#0F2044';
+      const secondary = ds.secondary_color || '#C9A84C';
+      const accent = ds.accent_color || '#F3F4F6';
+      const baseFontSize = ds.base_font_size || '16px';
+      const fontFamily = ds.font_family || 'Inter';
+      const spacingDensity = ds.spacing_density || 'comfortable';
+      const buttonPreset = ds.button_preset || 'rounded';
+
+      // Map spacing density to multiplier
+      let spacingMultiplier = '1';
+      if (spacingDensity === 'compact') spacingMultiplier = '0.75';
+      if (spacingDensity === 'loose') spacingMultiplier = '1.25';
+
+      // Map button preset to border-radius
+      let borderRadius = '4px';
+      if (buttonPreset === 'pill') borderRadius = '9999px';
+      if (buttonPreset === 'square') borderRadius = '0px';
+      if (buttonPreset === 'rounded-lg') borderRadius = '12px';
+
+      const root = document.documentElement;
+      root.style.setProperty('--primary-color', primary);
+      root.style.setProperty('--secondary-color', secondary);
+      root.style.setProperty('--accent-color', accent);
+      root.style.setProperty('--base-font-size', baseFontSize);
+      root.style.setProperty('--font-family', `'${fontFamily}', sans-serif`);
+      root.style.setProperty('--spacing-multiplier', spacingMultiplier);
+      root.style.setProperty('--button-border-radius', borderRadius);
+
+      // Inject Google Font
+      const fontId = 'dynamic-google-font';
+      let linkElement = document.getElementById(fontId) as HTMLLinkElement;
+      if (!linkElement) {
+        linkElement = document.createElement('link');
+        linkElement.id = fontId;
+        linkElement.rel = 'stylesheet';
+        document.head.appendChild(linkElement);
+      }
+      linkElement.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap`;
+
+    } catch (e) {
+      console.error('Error applying dynamic design tokens:', e);
+    }
+  }, [dbSettings]);
+
+  // Dynamic Navigation menu
+  const getNavLinks = useCallback(() => {
+    try {
+      if (dbSettings.navigation_menu) {
+        const menu = JSON.parse(dbSettings.navigation_menu);
+        if (Array.isArray(menu) && menu.length > 0) {
+          return menu.filter(item => item.is_active !== false).map(item => ({
+            label: item.label,
+            href: item.href,
+            link_type: item.link_type || 'page'
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing dynamic navigation:', e);
+    }
+    return NAV_LINKS;
+  }, [dbSettings.navigation_menu]);
+
+  const navLinks = getNavLinks();
+
+  // Parse dynamic footer config
+  const getFooterConfig = useCallback(() => {
+    try {
+      if (dbSettings.footer_config) {
+        return JSON.parse(dbSettings.footer_config);
+      }
+    } catch (e) {
+      console.error('Error parsing footer config:', e);
+    }
+    return {
+      description: 'Professional corporate training that transforms people and organisations.',
+      contact_email: dbSettings.contact_email || 'info@enkaprime.com',
+      contact_phone: dbSettings.contact_phone || '0200 769 146',
+      linkedin_url: 'https://linkedin.com/company/enkaprime',
+      copyright_text: '© 2026 Enka Prime Consulting Ltd. All rights reserved.',
+      tagline: dbSettings.about_tagline || 'Empowering People. Enhancing Performance. Delivering Excellence.'
+    };
+  }, [dbSettings]);
+
+  const footerConfig = getFooterConfig();
+
+  const handleNavClick = (link: { label: string; href: string; link_type?: string }) => {
+    if (link.link_type === 'external') {
+      window.open(link.href, '_blank');
+    } else if (link.link_type === 'section') {
+      navigate('home');
+      setTimeout(() => {
+        const targetId = link.href.replace('#', '');
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 150);
+    } else {
+      navigate(link.href);
+    }
+  };
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
@@ -93,11 +200,8 @@ export default function App() {
   };
 
   // Admin pages have their own layout
-  if (currentPage === 'admin') {
+  if (currentPage === 'admin' || currentPage === 'cms') {
     return <Admin onNavigate={navigate} />;
-  }
-  if (currentPage === 'cms') {
-    return <AdminCMS onNavigate={navigate} />;
   }
 
   const renderPage = () => {
@@ -118,26 +222,25 @@ export default function App() {
   };
 
   const NavBar = () => (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-white shadow-lg py-3' : 'bg-transparent py-5'}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-custom ${scrolled ? 'bg-white shadow-lg py-3' : 'bg-transparent py-5'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <button onClick={() => navigate('home')} className="flex items-center gap-3">
+        <button onClick={() => handleNavClick({ label: 'Home', href: 'home', link_type: 'page' })} className="flex items-center gap-3">
           <img src={dbSettings.site_logo || "/enkaprime/enkaprime-logo.png"} alt="Enka Prime Consulting Ltd" className="h-11 w-auto object-contain" />
         </button>
 
         <div className="hidden lg:flex items-center gap-8">
-          {NAV_LINKS.map(link => (
+          {navLinks.map(link => (
             <button
               key={link.href}
-              onClick={() => navigate(link.href)}
-              className={`text-sm font-semibold tracking-wide transition-colors duration-200 ${scrolled ? 'text-gray-700 hover:text-yellow-700' : 'text-white/90 hover:text-yellow-300'}`}
+              onClick={() => handleNavClick(link)}
+              className={`text-sm font-semibold tracking-wide transition-colors duration-200 ${scrolled ? 'text-gray-700 hover:text-custom-secondary' : 'text-white/90 hover:text-custom-secondary'}`}
             >
               {link.label}
             </button>
           ))}
           <button
             onClick={() => navigate('contact')}
-            className="px-5 py-2.5 text-sm font-bold rounded tracking-wide transition-all duration-200 hover:scale-105 hover:shadow-lg"
-            style={{ background: GOLD, color: NAVY }}
+            className="button-custom bg-custom-secondary text-custom-primary px-5 py-2.5 text-sm font-bold tracking-wide transition-all duration-200 hover:scale-105 hover:shadow-lg"
           >
             Enroll Now
           </button>
@@ -153,19 +256,18 @@ export default function App() {
 
       {menuOpen && (
         <div className="lg:hidden bg-white shadow-xl border-t border-gray-100 px-6 py-4">
-          {NAV_LINKS.map(link => (
+          {navLinks.map(link => (
             <button
               key={link.href}
-              onClick={() => navigate(link.href)}
-              className="block w-full text-left py-3 text-gray-800 font-semibold border-b border-gray-100 hover:text-yellow-700 transition-colors"
+              onClick={() => handleNavClick(link)}
+              className="block w-full text-left py-3 text-gray-800 font-semibold border-b border-gray-100 hover:text-custom-secondary transition-colors"
             >
               {link.label}
             </button>
           ))}
           <button
             onClick={() => navigate('contact')}
-            className="block w-full mt-4 text-center px-5 py-3 font-bold rounded tracking-wide"
-            style={{ background: GOLD, color: NAVY }}
+            className="button-custom bg-custom-secondary text-custom-primary block w-full mt-4 text-center px-5 py-3 font-bold tracking-wide"
           >
             Enroll Now
           </button>
@@ -374,21 +476,37 @@ export default function App() {
       {renderPage()}
 
       {/* Footer */}
-      <footer style={{ background: NAVY }} className="pt-14 pb-8">
+      <footer className="bg-custom-primary pt-14 pb-8 border-t border-white/10 font-custom text-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-10 pb-10 border-b" style={{ borderColor: `${GOLD}30` }}>
-            <div>
+          <div className="grid md:grid-cols-4 gap-10 pb-10 border-b border-white/10">
+            <div className="md:col-span-2">
               <img src={dbSettings.site_logo || "/enkaprime/enkaprime-logo.png"} alt="Enka Prime Consulting Ltd" className="h-16 w-auto mb-4 object-contain" />
-              <p className="text-blue-300 text-sm leading-relaxed mt-4">
-                Professional corporate training that transforms people and organisations.
+              <p className="text-gray-300 text-sm leading-relaxed mt-4 max-w-sm">
+                {footerConfig.description || 'Professional corporate training that transforms people and organisations.'}
               </p>
+              {footerConfig.linkedin_url && (
+                <div className="mt-4">
+                  <a
+                    href={footerConfig.linkedin_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-custom-secondary font-bold hover:underline"
+                  >
+                    <span>Connect on LinkedIn</span> →
+                  </a>
+                </div>
+              )}
             </div>
 
             <div>
-              <h4 className="font-bold mb-4 text-xs tracking-widest uppercase" style={{ color: GOLD }}>Quick Links</h4>
+              <h4 className="font-bold mb-4 text-xs tracking-widest uppercase text-custom-secondary">Quick Links</h4>
               <div className="space-y-2">
-                {NAV_LINKS.map(link => (
-                  <button key={link.href} onClick={() => navigate(link.href)} className="block text-blue-300 text-sm hover:text-white transition-colors">
+                {navLinks.map(link => (
+                  <button
+                    key={link.href}
+                    onClick={() => handleNavClick(link)}
+                    className="block text-gray-300 text-sm hover:text-white transition-colors text-left"
+                  >
                     {link.label}
                   </button>
                 ))}
@@ -396,18 +514,18 @@ export default function App() {
             </div>
 
             <div>
-              <h4 className="font-bold mb-4 text-xs tracking-widest uppercase" style={{ color: GOLD }}>Contact</h4>
+              <h4 className="font-bold mb-4 text-xs tracking-widest uppercase text-custom-secondary">Contact</h4>
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-blue-300 text-sm">
-                  <Mail size={14} style={{ color: GOLD }} />
-                  <a href={`mailto:${dbSettings.contact_email || 'info@enkaprime.com'}`} className="hover:text-white transition-colors">
-                    {dbSettings.contact_email || 'info@enkaprime.com'}
+                <div className="flex items-center gap-2 text-gray-300 text-sm">
+                  <Mail size={14} className="text-custom-secondary" />
+                  <a href={`mailto:${footerConfig.contact_email}`} className="hover:text-white transition-colors">
+                    {footerConfig.contact_email}
                   </a>
                 </div>
-                <div className="flex items-center gap-2 text-blue-300 text-sm">
-                  <Phone size={14} style={{ color: GOLD }} />
-                  <a href={`tel:${dbSettings.contact_phone || '0200769146'}`} className="hover:text-white transition-colors">
-                    {dbSettings.contact_phone || '0200 769 146'}
+                <div className="flex items-center gap-2 text-gray-300 text-sm">
+                  <Phone size={14} className="text-custom-secondary" />
+                  <a href={`tel:${footerConfig.contact_phone.replace(/\s+/g, '')}`} className="hover:text-white transition-colors">
+                    {footerConfig.contact_phone}
                   </a>
                 </div>
               </div>
@@ -415,11 +533,11 @@ export default function App() {
           </div>
 
           <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-blue-400 text-sm">
-              &copy; 2026 Enka Prime Consulting Ltd. All rights reserved.
+            <p className="text-gray-400 text-sm">
+              {footerConfig.copyright_text || '© 2026 Enka Prime Consulting Ltd. All rights reserved.'}
             </p>
-            <p className="text-sm font-semibold italic" style={{ color: GOLD }}>
-              {dbSettings.about_tagline || 'Empowering People. Enhancing Performance. Delivering Excellence.'}
+            <p className="text-sm font-semibold italic text-custom-secondary">
+              {footerConfig.tagline || 'Empowering People. Enhancing Performance. Delivering Excellence.'}
             </p>
           </div>
         </div>

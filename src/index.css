@@ -2,6 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-color: #0F2044;
+  --secondary-color: #C9A84C;
+  --accent-color: #f3f4f6;
+  --base-font-size: 16px;
+  --font-family: 'Inter', sans-serif;
+  --spacing-multiplier: 1;
+  --button-border-radius: 4px;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--base-font-size);
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+/* Custom dynamic design system styling */
+.bg-custom-primary {
+  background-color: var(--primary-color) !important;
+}
+.text-custom-primary {
+  color: var(--primary-color) !important;
+}
+.border-custom-primary {
+  border-color: var(--primary-color) !important;
+}
+
+.bg-custom-secondary {
+  background-color: var(--secondary-color) !important;
+}
+.text-custom-secondary {
+  color: var(--secondary-color) !important;
+}
+.border-custom-secondary {
+  border-color: var(--secondary-color) !important;
+}
+
+.bg-custom-accent {
+  background-color: var(--accent-color) !important;
+}
+.text-custom-accent {
+  color: var(--accent-color) !important;
+}
+
+.font-custom {
+  font-family: var(--font-family) !important;
+}
+
+.button-custom {
+  border-radius: var(--button-border-radius) !important;
+}
+
 @layer base {
   * {
     @apply scroll-smooth;
