@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
-  Menu, LogOut, Settings, Users, BookOpen, BarChart3, 
+  Menu, LogOut, Settings, Users, BookOpen, BarChart3, Briefcase, 
   Save, Plus, Trash2, CreditCard as Edit3, Eye, EyeOff, 
   ArrowLeft, RefreshCw, CheckCircle, AlertCircle, Star, 
   Image as ImageIcon, Palette, Compass, Layout, 
@@ -11,10 +11,26 @@ import {
 const GOLD = '#C9A84C';
 const NAVY = '#0F2044';
 
-type AdminTab = 'dashboard' | 'pages' | 'programmes' | 'design_system' | 'navigation' | 'homepage_builder' | 'footer' | 'settings';
+type AdminTab = 'dashboard' | 'pages' | 'services' | 'programmes' | 'design_system' | 'navigation' | 'homepage_builder' | 'footer' | 'settings';
 
 interface SiteSetting { id: string; key: string; value: string; updated_at: string }
-interface Service { id: string; code: string; title: string; description: string; full_description: string; image_url: string; sort_order: number; is_active: boolean; created_at: string; updated_at: string }
+interface Service { 
+  id: string; 
+  code: string; 
+  title: string; 
+  description: string; 
+  full_description: string; 
+  image_url: string; 
+  sort_order: number; 
+  is_active: boolean; 
+  tagline?: string;
+  components?: string[];
+  pain_points?: string[];
+  solutions?: string[];
+  benefits?: string[];
+  created_at: string; 
+  updated_at: string; 
+}
 interface Programme { id: string; code: string; title: string; days: number; category: string; is_active: boolean; is_featured: boolean; description: string; created_at: string; updated_at: string }
 interface CourseModule { id: string; code: string; title: string; description: string; duration: string }
 
@@ -320,6 +336,7 @@ export default function Admin({ onNavigate }: { onNavigate: (page: string) => vo
   const TAB_CONFIG: { key: AdminTab; label: string; icon: any }[] = [
     { key: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { key: 'pages', label: 'Pages (Content)', icon: FileText },
+    { key: 'services', label: 'Services Manager', icon: Briefcase },
     { key: 'programmes', label: 'Programmes & Modules', icon: BookOpen },
     { key: 'design_system', label: 'Design System', icon: Palette },
     { key: 'navigation', label: 'Navigation Manager', icon: Compass },
@@ -492,6 +509,307 @@ export default function Admin({ onNavigate }: { onNavigate: (page: string) => vo
               </button>
             )}
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ─── SERVICES MANAGER VIEW ───
+  const ServicesManagerView = () => {
+    const [selectedService, setSelectedService] = useState<Service | null>(null);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [tagline, setTagline] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
+    const [components, setComponents] = useState<string[]>([]);
+    const [painPoints, setPainPoints] = useState<string[]>([]);
+    const [solutions, setSolutions] = useState<string[]>([]);
+    const [benefits, setBenefits] = useState<string[]>([]);
+    const [isActive, setIsActive] = useState(true);
+
+    const [newComp, setNewComp] = useState('');
+    const [newPain, setNewPain] = useState('');
+    const [newSol, setNewSol] = useState('');
+    const [newBen, setNewBen] = useState('');
+
+    useEffect(() => {
+      if (selectedService) {
+        setTitle(selectedService.title || '');
+        setDescription(selectedService.description || '');
+        setTagline(selectedService.tagline || '');
+        setImageUrl(selectedService.image_url || '');
+        setComponents(selectedService.components || []);
+        setPainPoints(selectedService.pain_points || []);
+        setSolutions(selectedService.solutions || []);
+        setBenefits(selectedService.benefits || []);
+        setIsActive(selectedService.is_active);
+      } else if (services.length > 0) {
+        setSelectedService(services[0]);
+      }
+    }, [selectedService, services]);
+
+    const handleSave = async () => {
+      if (!selectedService) return;
+      
+      const payload: Partial<Service> = {
+        id: selectedService.id,
+        title,
+        description,
+        tagline,
+        image_url: imageUrl,
+        components,
+        pain_points: painPoints,
+        solutions,
+        benefits,
+        is_active: isActive,
+      };
+
+      await saveService(payload);
+    };
+
+    const addToArray = (arr: string[], setArr: React.Dispatch<React.SetStateAction<string[]>>, val: string, setVal: React.Dispatch<React.SetStateAction<string>>) => {
+      if (!val.trim()) return;
+      setArr([...arr, val.trim()]);
+      setVal('');
+    };
+
+    const removeFromArray = (arr: string[], setArr: React.Dispatch<React.SetStateAction<string[]>>, idx: number) => {
+      setArr(arr.filter((_, i) => i !== idx));
+    };
+
+    return (
+      <div className="grid lg:grid-cols-12 gap-6">
+        {/* Left: Services Sidebar List */}
+        <div className="lg:col-span-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+          <h3 className="font-bold text-slate-800 text-sm border-b pb-2 mb-2">Service Pillars</h3>
+          <div className="space-y-2">
+            {services.map(svc => (
+              <button
+                key={svc.id}
+                onClick={() => setSelectedService(svc)}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                  selectedService?.id === svc.id
+                    ? 'border-yellow-500 bg-yellow-50/30 shadow-sm'
+                    : 'border-gray-100 hover:border-gray-300'
+                }`}
+              >
+                <div>
+                  <div className="font-bold text-sm text-slate-800">{svc.title.split(' & ')[0]}</div>
+                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">{svc.code}</div>
+                </div>
+                <div className={`text-[10px] px-2 py-0.5 rounded font-bold ${svc.is_active ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                  {svc.is_active ? 'Active' : 'Inactive'}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Selected Service Form */}
+        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+          {selectedService ? (
+            <>
+              <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                  <h3 className="font-bold text-slate-800 text-base">Edit Service: {selectedService.title.split(' & ')[0]}</h3>
+                  <p className="text-gray-400 text-xs mt-0.5">Code: {selectedService.code.toUpperCase()}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 font-semibold">Active Status:</span>
+                  <button
+                    onClick={() => setIsActive(!isActive)}
+                    className={`w-10 h-6 rounded-full transition-all relative ${isActive ? 'bg-yellow-500' : 'bg-gray-200'}`}
+                  >
+                    <span className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-all ${isActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Title */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Service Title</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border text-sm focus:border-yellow-500 outline-none font-custom"
+                  />
+                </div>
+
+                {/* Tagline / Subtitle */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Hero Subtitle / Tagline (Details Page)</label>
+                  <input
+                    type="text"
+                    value={tagline}
+                    onChange={e => setTagline(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border text-sm focus:border-yellow-500 outline-none font-custom"
+                    placeholder="e.g. Turning paper trails into structured digital intelligence"
+                  />
+                </div>
+
+                {/* Short Description */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">Short Description (Overview Cards)</label>
+                  <textarea
+                    rows={3}
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border text-sm focus:border-yellow-500 outline-none font-custom"
+                  />
+                </div>
+
+                {/* Image */}
+                <ImageUploadField label="Service Header / Banner Image" value={imageUrl} onChange={setImageUrl} />
+
+                {/* Consulting Fields (Components, Pain Points, Solutions, Benefits) */}
+                {selectedService.code !== 'training' && (
+                  <div className="space-y-6 pt-4 border-t border-gray-100">
+                    <h4 className="font-bold text-slate-800 text-sm">Detailed Consulting Configuration</h4>
+
+                    {/* Scope of Service Components */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-gray-500">Scope of Service / Components</label>
+                      <div className="space-y-1">
+                        {components.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border rounded-lg text-xs gap-3">
+                            <span className="text-gray-700 font-medium">{item}</span>
+                            <button onClick={() => removeFromArray(components, setComponents, idx)} className="text-red-500 hover:text-red-700">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newComp}
+                          onChange={e => setNewComp(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addToArray(components, setComponents, newComp, setNewComp); } }}
+                          placeholder="Add new scope item..."
+                          className="flex-1 px-3 py-1.5 rounded-lg border text-xs outline-none focus:border-yellow-500"
+                        />
+                        <button
+                          onClick={() => addToArray(components, setComponents, newComp, setNewComp)}
+                          className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Pain Points */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-gray-500">Pain Points (Current Problem)</label>
+                      <div className="space-y-1">
+                        {painPoints.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-red-50 border border-red-100 rounded-lg text-xs gap-3">
+                            <span className="text-gray-700 font-medium">{item}</span>
+                            <button onClick={() => removeFromArray(painPoints, setPainPoints, idx)} className="text-red-500 hover:text-red-700">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newPain}
+                          onChange={e => setNewPain(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addToArray(painPoints, setPainPoints, newPain, setNewPain); } }}
+                          placeholder="Add new pain point..."
+                          className="flex-1 px-3 py-1.5 rounded-lg border text-xs outline-none focus:border-yellow-500"
+                        />
+                        <button
+                          onClick={() => addToArray(painPoints, setPainPoints, newPain, setNewPain)}
+                          className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Intervention / Solutions */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-gray-500">How We Intervene / Solutions</label>
+                      <div className="space-y-1">
+                        {solutions.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-green-50 border border-green-100 rounded-lg text-xs gap-3">
+                            <span className="text-gray-700 font-medium">{item}</span>
+                            <button onClick={() => removeFromArray(solutions, setSolutions, idx)} className="text-red-500 hover:text-red-700">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newSol}
+                          onChange={e => setNewSol(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addToArray(solutions, setSolutions, newSol, setNewSol); } }}
+                          placeholder="Add new solution step..."
+                          className="flex-1 px-3 py-1.5 rounded-lg border text-xs outline-none focus:border-yellow-500"
+                        />
+                        <button
+                          onClick={() => addToArray(solutions, setSolutions, newSol, setNewSol)}
+                          className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Benefits & Outcomes */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-gray-500">Outcomes & Benefits</label>
+                      <div className="space-y-1">
+                        {benefits.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-yellow-50 border border-yellow-100 rounded-lg text-xs gap-3">
+                            <span className="text-gray-700 font-medium">{item}</span>
+                            <button onClick={() => removeFromArray(benefits, setBenefits, idx)} className="text-red-500 hover:text-red-700">
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newBen}
+                          onChange={e => setNewBen(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addToArray(benefits, setBenefits, newBen, setNewBen); } }}
+                          placeholder="Add new benefit..."
+                          className="flex-1 px-3 py-1.5 rounded-lg border text-xs outline-none focus:border-yellow-500"
+                        />
+                        <button
+                          onClick={() => addToArray(benefits, setBenefits, newBen, setNewBen)}
+                          className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end pt-4 border-t border-gray-100">
+                <button
+                  onClick={handleSave}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-slate-900 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors font-custom"
+                >
+                  <Save size={14} /> Save Service Changes
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-16 text-gray-400 text-sm">
+              Select a service from the left to start editing.
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1383,6 +1701,7 @@ export default function Admin({ onNavigate }: { onNavigate: (page: string) => vo
         <main className="p-6 flex-1 max-w-6xl w-full mx-auto">
           {activeTab === 'dashboard' && <DashboardView />}
           {activeTab === 'pages' && <PagesView />}
+          {activeTab === 'services' && <ServicesManagerView />}
           {activeTab === 'programmes' && <ProgrammesView />}
           {activeTab === 'design_system' && <DesignSystemView />}
           {activeTab === 'navigation' && <NavigationManagerView />}

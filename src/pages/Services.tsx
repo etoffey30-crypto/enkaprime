@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { ArrowRight, ChevronLeft, Database, Tag, ShieldCheck, GraduationCap } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const GOLD = '#C9A84C';
 const NAVY = '#0F2044';
@@ -42,11 +44,45 @@ const SERVICE_PILLARS = [
   },
 ];
 
+const ICON_MAP: Record<string, any> = {
+  records: Database,
+  asset: Tag,
+  iso: ShieldCheck,
+  training: GraduationCap,
+};
+
 interface ServicesProps {
   onNavigate: (page: string) => void;
 }
 
 export default function Services({ onNavigate }: ServicesProps) {
+  const [pillars, setPillars] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadServices() {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (data && data.length > 0) {
+        const mapped = data.map(item => ({
+          id: item.code,
+          slug: item.code === 'training' ? 'training' : `service-${item.code}`,
+          icon: ICON_MAP[item.code] || Database,
+          title: item.title,
+          short: item.description,
+          image: item.image_url,
+          accent: item.code === 'records' ? '#1a6b9a' : item.code === 'asset' ? '#2d6a4f' : item.code === 'iso' ? '#7b2d8b' : '#9a4b1a',
+        }));
+        setPillars(mapped);
+      } else {
+        setPillars(SERVICE_PILLARS);
+      }
+    }
+    loadServices();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-sans pt-20 overflow-hidden">
 
@@ -106,7 +142,7 @@ export default function Services({ onNavigate }: ServicesProps) {
 
           {/* 2×2 Grid */}
           <div className="grid md:grid-cols-2 gap-8">
-            {SERVICE_PILLARS.map((svc, idx) => {
+            {pillars.map((svc, idx) => {
               const Icon = svc.icon;
               return (
                 <div

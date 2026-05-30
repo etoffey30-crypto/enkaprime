@@ -1,4 +1,6 @@
+import { useEffect, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, CheckCircle, AlertTriangle, Wrench, TrendingUp, Phone, Mail } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const GOLD = '#C9A84C';
 const NAVY = '#0F2044';
@@ -138,7 +140,51 @@ interface ServiceDetailProps {
 }
 
 export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailProps) {
-  const data = SERVICE_DATA[serviceKey];
+  const [data, setData] = useState<ServiceData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadServiceData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: dbData } = await supabase
+        .from('services')
+        .select('*')
+        .eq('code', serviceKey)
+        .single();
+
+      if (dbData) {
+        setData({
+          title: dbData.title,
+          tagline: dbData.tagline || dbData.full_description,
+          heroImage: dbData.image_url,
+          components: dbData.components || [],
+          painPoints: dbData.pain_points || [],
+          solutions: dbData.solutions || [],
+          benefits: dbData.benefits || [],
+        });
+      } else {
+        setData(SERVICE_DATA[serviceKey] || null);
+      }
+    } catch (e) {
+      setData(SERVICE_DATA[serviceKey] || null);
+    }
+    setLoading(false);
+  }, [serviceKey]);
+
+  useEffect(() => {
+    loadServiceData();
+  }, [loadServiceData]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ color: NAVY }}>
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm font-semibold text-gray-500 font-custom">Loading service details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!data) {
     return (
