@@ -1,20 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Menu, X, Phone, Mail, MapPin,
-  CheckCircle
+  CheckCircle, ChevronDown, Database, Tag, ShieldCheck, GraduationCap
 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import Home from './pages/Home';
 import Services from './pages/Services';
+import ServiceDetail from './pages/ServiceDetail';
+import Training from './pages/Training';
 import About from './pages/About';
 import Admin from './pages/Admin';
 
 const NAV_LINKS = [
   { label: 'Home', href: 'home' },
-  { label: 'Services', href: 'services' },
-  { label: 'Programmes', href: 'programmes' },
-  { label: 'About', href: 'about' },
+  { label: 'Services', href: 'services', hasDropdown: true },
+  { label: 'Upcoming Training', href: 'training' },
+  { label: 'About Us', href: 'about' },
   { label: 'Contact', href: 'contact' },
+];
+
+const SERVICE_DROPDOWN = [
+  { label: 'Records Digitalisation', sub: 'Document Management Systems', href: 'service-records', icon: Database },
+  { label: 'Asset Tagging', sub: 'Asset Register Development', href: 'service-asset', icon: Tag },
+  { label: 'ISO Implementation', sub: 'Compliance Support', href: 'service-iso', icon: ShieldCheck },
+  { label: 'Training & Capacity', sub: 'Corporate Learning Programmes', href: 'training', icon: GraduationCap },
 ];
 
 const CATEGORIES = ['All', 'Leadership', 'Customer Service', 'HSE', 'Finance', 'Digital', 'General'];
@@ -34,6 +43,8 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [formData, setFormData] = useState({ name: '', email: '', organization: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Listen for hash changes (back/forward browser buttons)
   useEffect(() => {
@@ -210,16 +221,27 @@ export default function App() {
         return <Home onNavigate={navigate} settings={dbSettings} />;
       case 'services':
         return <Services onNavigate={navigate} />;
+      case 'service-records':
+        return <ServiceDetail serviceKey="records" onNavigate={navigate} />;
+      case 'service-asset':
+        return <ServiceDetail serviceKey="asset" onNavigate={navigate} />;
+      case 'service-iso':
+        return <ServiceDetail serviceKey="iso" onNavigate={navigate} />;
+      case 'training':
+        return <Training onNavigate={navigate} />;
       case 'about':
         return <About onNavigate={navigate} settings={dbSettings} />;
       case 'programmes':
-        return <ProgrammesPage />;
+        return <Training onNavigate={navigate} />;
       case 'contact':
         return <ContactPage />;
       default:
         return <Home onNavigate={navigate} settings={dbSettings} />;
     }
   };
+
+  const GOLD_COLOR = '#C9A84C';
+  const NAVY_COLOR = '#0F2044';
 
   const NavBar = () => (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-custom ${scrolled ? 'bg-white shadow-lg py-3' : 'bg-transparent py-5'}`}>
@@ -229,20 +251,87 @@ export default function App() {
         </button>
 
         <div className="hidden lg:flex items-center gap-8">
-          {navLinks.map(link => (
-            <button
-              key={link.href}
-              onClick={() => handleNavClick(link)}
-              className={`text-sm font-semibold tracking-wide transition-colors duration-200 ${scrolled ? 'text-gray-700 hover:text-custom-secondary' : 'text-white/90 hover:text-custom-secondary'}`}
-            >
-              {link.label}
-            </button>
-          ))}
+          {navLinks.map((link: any) => {
+            if (link.hasDropdown || link.href === 'services') {
+              return (
+                <div key={link.href} className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setServicesDropdownOpen(o => !o)}
+                    onBlur={() => setTimeout(() => setServicesDropdownOpen(false), 150)}
+                    className={`flex items-center gap-1 text-sm font-semibold tracking-wide transition-colors duration-200 ${
+                      scrolled ? 'text-gray-700 hover:text-yellow-600' : 'text-white/90 hover:text-yellow-400'
+                    }`}
+                  >
+                    {link.label}
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${servicesDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Mega Dropdown */}
+                  {servicesDropdownOpen && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[480px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
+                      style={{ boxShadow: '0 25px 60px rgba(15,32,68,0.18)' }}>
+                      {/* Header */}
+                      <div className="px-6 py-4 border-b border-gray-100" style={{ background: `${NAVY_COLOR}08` }}>
+                        <div className="text-[10px] font-extrabold tracking-widest uppercase mb-0.5" style={{ color: GOLD_COLOR }}>Consulting Services</div>
+                        <div className="text-sm font-bold" style={{ color: NAVY_COLOR }}>Our Core Service Areas</div>
+                      </div>
+
+                      {/* Service Links */}
+                      <div className="p-3">
+                        {SERVICE_DROPDOWN.map(item => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.href}
+                              onClick={() => { navigate(item.href); setServicesDropdownOpen(false); }}
+                              className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-150 group text-left"
+                            >
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110"
+                                style={{ background: `${NAVY_COLOR}0d` }}>
+                                <Icon size={18} style={{ color: NAVY_COLOR }} />
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-bold text-sm group-hover:text-yellow-600 transition-colors" style={{ color: NAVY_COLOR }}>{item.label}</div>
+                                <div className="text-xs text-gray-400 mt-0.5">{item.sub}</div>
+                              </div>
+                              <ChevronDown size={14} className="-rotate-90 text-gray-300 group-hover:text-yellow-500 transition-colors" />
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Footer CTA in dropdown */}
+                      <div className="px-6 py-4 border-t border-gray-100">
+                        <button
+                          onClick={() => { navigate('services'); setServicesDropdownOpen(false); }}
+                          className="w-full py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all hover:scale-[1.02]" 
+                          style={{ background: NAVY_COLOR, color: 'white' }}
+                        >
+                          View All Services Overview
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <button
+                key={link.href}
+                onClick={() => handleNavClick(link)}
+                className={`text-sm font-semibold tracking-wide transition-colors duration-200 ${
+                  scrolled ? 'text-gray-700 hover:text-custom-secondary' : 'text-white/90 hover:text-custom-secondary'
+                }`}
+              >
+                {link.label}
+              </button>
+            );
+          })}
           <button
             onClick={() => navigate('contact')}
             className="button-custom bg-custom-secondary text-custom-primary px-5 py-2.5 text-sm font-bold tracking-wide transition-all duration-200 hover:scale-105 hover:shadow-lg"
           >
-            Enroll Now
+            Get In Touch
           </button>
         </div>
 
@@ -254,9 +343,30 @@ export default function App() {
         </button>
       </div>
 
+      {/* Mobile menu */}
       {menuOpen && (
         <div className="lg:hidden bg-white shadow-xl border-t border-gray-100 px-6 py-4">
-          {navLinks.map(link => (
+          {/* Services section expanded in mobile */}
+          <div className="py-2 border-b border-gray-100">
+            <div className="text-[10px] font-extrabold tracking-widest uppercase text-gray-400 mb-2">Services</div>
+            {SERVICE_DROPDOWN.map(item => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => { navigate(item.href); setMenuOpen(false); }}
+                  className="flex items-center gap-3 w-full py-2.5 text-gray-700 hover:text-yellow-600 transition-colors text-left"
+                >
+                  <Icon size={15} className="text-gray-400" />
+                  <div>
+                    <div className="text-sm font-semibold">{item.label}</div>
+                    <div className="text-[11px] text-gray-400">{item.sub}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {navLinks.filter((l: any) => !l.hasDropdown && l.href !== 'services').map((link: any) => (
             <button
               key={link.href}
               onClick={() => handleNavClick(link)}
@@ -269,7 +379,7 @@ export default function App() {
             onClick={() => navigate('contact')}
             className="button-custom bg-custom-secondary text-custom-primary block w-full mt-4 text-center px-5 py-3 font-bold tracking-wide"
           >
-            Enroll Now
+            Get In Touch
           </button>
         </div>
       )}
