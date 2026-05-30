@@ -111,103 +111,136 @@ export default function Home({ onNavigate, settings }: HomeProps) {
           <div className="absolute bottom-20 right-10 w-72 h-72 bg-yellow-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-float opacity-40 animate-delay-300" />
         </div>
 
-        {/* Floating premium interactive cards - Hidden on mobile/tablet */}
-        <div className="hidden xl:flex absolute left-8 top-[30%] w-64 p-5 rounded-2xl backdrop-blur-md border border-white/10 shadow-2xl flex-col gap-3 animate-float hover:scale-105 hover:border-yellow-500/30 transition-all duration-500 select-none font-sans"
-             style={{ background: 'rgba(15, 32, 68, 0.45)', animationDuration: '7s' }}>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-[10px] text-yellow-400 font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Active Session
-            </span>
-            <span className="text-[9px] text-blue-200 bg-white/10 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Leadership</span>
-          </div>
-          <h4 className="text-white text-xs font-semibold leading-relaxed text-left">Records Digitalisation & Document Management</h4>
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex -space-x-1.5">
-              {[
-                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80',
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&q=80',
-                'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=60&q=80'
-              ].map((src, i) => (
-                <img key={i} src={src} className="w-5.5 h-5.5 rounded-full border border-slate-900 object-cover" alt="Student avatar" />
-              ))}
-              <div className="w-5.5 h-5.5 rounded-full bg-yellow-500 text-[8px] font-bold text-slate-900 flex items-center justify-center border border-slate-900">+48</div>
+        {/* Split Two-Column Content Layout */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 lg:py-32 flex flex-col justify-center min-h-screen w-full animate-fade-in">
+          <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center w-full mt-10 lg:mt-0">
+            
+            {/* Left Column: Headline and CTAs */}
+            <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left w-full">
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md animate-fade-in-down hover:scale-105 hover:bg-yellow-400/20 transition-all duration-300 self-center lg:self-start"
+                style={{ background: 'rgba(201,168,76,0.25)', border: `1px solid ${GOLD}80`, color: GOLD }}
+              >
+                <Zap size={12} className="animate-pulse" />
+                {settings.hero_badge_text || 'June 2026 Training Programmes Now Open'}
+              </div>
+
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight mb-4 drop-shadow-lg animate-fade-in-up text-center lg:text-left" style={{ animationDelay: '100ms' }}>
+                {settings.hero_title || 'Empowering People.'}
+              </h1>
+
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 drop-shadow-md animate-fade-in-up flex items-center gap-2 text-center lg:text-left" style={{ color: GOLD, animationDelay: '200ms' }}>
+                Enhancing{' '}
+                <span className="relative inline-block min-w-[140px] text-left">
+                  <span className={`inline-block transition-all duration-400 transform ${isTransitioning ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}>
+                    {phrases[wordIndex]}
+                  </span>
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] rounded-full bg-gradient-to-r from-yellow-500/20 via-yellow-400 to-yellow-500/20" />
+                </span>
+              </h2>
+
+              <p className="text-base md:text-lg text-blue-100 max-w-xl mb-8 leading-relaxed drop-shadow-md animate-fade-in-up text-center lg:text-left" style={{ animationDelay: '300ms' }}>
+                {settings.hero_description || 'Enka Prime Consulting delivers world-class, in-house corporate training across leadership, finance, safety, digital skills and professional development — transforming organisations from within.'}
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 animate-fade-in-up w-full sm:w-auto" style={{ animationDelay: '400ms' }}>
+                <button
+                  onClick={() => onNavigate('programmes')}
+                  className="group flex items-center justify-center gap-2 px-8 py-4 font-bold text-base rounded tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.4)] hover:-translate-y-0.5 relative overflow-hidden w-full sm:w-auto"
+                  style={{ background: GOLD, color: NAVY }}
+                >
+                  View Programmes 
+                  <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1.5" />
+                </button>
+                <button
+                  onClick={() => onNavigate('contact')}
+                  className="flex items-center justify-center gap-2 px-8 py-4 font-bold text-base rounded tracking-wide border-2 text-white transition-all duration-300 hover:bg-white/10 hover:border-yellow-400/50 backdrop-blur-sm hover:scale-105 hover:-translate-y-0.5 w-full sm:w-auto"
+                  style={{ borderColor: 'rgba(255,255,255,0.4)' }}
+                >
+                  Contact Us <ChevronRight size={18} />
+                </button>
+              </div>
             </div>
-            <span className="text-[10px] font-bold text-yellow-400 flex items-center gap-1">
-              <Sparkles size={10} className="text-yellow-400 animate-pulse" />
-              Class Active
-            </span>
-          </div>
-          <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-1">
-            <div className="bg-gradient-to-r from-yellow-500 to-amber-400 h-full rounded-full animate-pulse" style={{ width: '74%' }} />
-          </div>
-        </div>
 
-        <div className="hidden xl:flex absolute right-8 top-[32%] w-64 p-5 rounded-2xl backdrop-blur-md border border-white/10 shadow-2xl flex-col gap-3 animate-float hover:scale-105 hover:border-yellow-500/30 transition-all duration-500 select-none font-sans"
-             style={{ background: 'rgba(15, 32, 68, 0.45)', animationDuration: '9s', animationDelay: '1.8s' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-yellow-400 font-bold text-sm shadow-inner">
-              ✓
+            {/* Right Column: Premium Glassmorphic Console Dashboard Mockup */}
+            <div className="lg:col-span-5 hidden lg:flex items-center justify-end w-full animate-fade-in-right" style={{ animationDelay: '200ms' }}>
+              <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
+                {/* Decorative radial background glow */}
+                <div className="absolute inset-0 bg-yellow-500/10 rounded-full filter blur-3xl animate-pulse-slow" />
+                
+                {/* The main dashboard mockup container */}
+                <div className="relative w-full bg-slate-950/45 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl flex flex-col gap-5 animate-float select-none">
+                  {/* Console Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-red-500/80" />
+                      <div className="w-2 h-2 rounded-full bg-yellow-500/80" />
+                      <div className="w-2 h-2 rounded-full bg-emerald-500/80" />
+                    </div>
+                    <span className="text-[9px] text-blue-200/50 font-mono tracking-wider">ENKAPRIME_CONSOLE_V2.0</span>
+                  </div>
+
+                  {/* Widget 1: Active Class in Session */}
+                  <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 transition-all duration-300 hover:border-yellow-500/20">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-[9px] text-yellow-400 font-bold uppercase tracking-wider">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Active Training
+                      </span>
+                      <span className="text-[8px] text-blue-200 bg-white/10 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Leadership</span>
+                    </div>
+                    <h4 className="text-white text-xs font-semibold leading-relaxed text-left">Records Digitalisation & Document Management</h4>
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="flex -space-x-1.5">
+                        {[
+                          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80',
+                          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&q=80',
+                          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=60&q=80'
+                        ].map((src, i) => (
+                          <img key={i} src={src} className="w-5.5 h-5.5 rounded-full border border-slate-900 object-cover" alt="Student avatar" />
+                        ))}
+                        <div className="w-5.5 h-5.5 rounded-full bg-yellow-500 text-[8px] font-bold text-slate-900 flex items-center justify-center border border-slate-900">+48</div>
+                      </div>
+                      <span className="text-[10px] font-bold text-yellow-400 flex items-center gap-1">
+                        <Sparkles size={10} className="text-yellow-400 animate-pulse" />
+                        Class Active
+                      </span>
+                    </div>
+                    <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-1">
+                      <div className="bg-gradient-to-r from-yellow-500 to-amber-400 h-full rounded-full animate-pulse" style={{ width: '74%' }} />
+                    </div>
+                  </div>
+
+                  {/* Widget 2: ISO Audit Success */}
+                  <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex items-center justify-between transition-all duration-300 hover:border-yellow-500/20">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-yellow-400 font-bold text-sm shadow-inner">
+                        ✓
+                      </div>
+                      <div className="text-left">
+                        <h4 className="text-white text-xs font-bold leading-tight">100% Audit Pass Rate</h4>
+                        <p className="text-[10px] text-blue-200">ISO 9001 / 27001 Implementation</p>
+                      </div>
+                    </div>
+                    <span className="text-[8px] font-bold text-yellow-400 bg-yellow-400/20 px-2 py-0.5 rounded-full uppercase tracking-wider border border-yellow-500/20">
+                      Certified
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Floating mini-badge */}
+                <div className="absolute -bottom-3 -left-3 bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-900 font-bold text-[10px] px-3.5 py-2 rounded-xl shadow-xl flex items-center gap-1.5 animate-bounce"
+                     style={{ animationDuration: '4s' }}>
+                  <Zap size={10} className="fill-slate-900" />
+                  <span>10+ Years Excellence</span>
+                </div>
+              </div>
             </div>
-            <div className="text-left">
-              <h4 className="text-white text-xs font-bold leading-tight">100% Audit Pass Rate</h4>
-              <p className="text-[10px] text-blue-200">ISO 9001 / 27001</p>
-            </div>
-          </div>
-          <div className="border-t border-white/10 my-0.5 pt-2.5 flex justify-between items-center">
-            <span className="text-[10px] text-slate-300">Compliance Standard</span>
-            <span className="text-[9px] font-bold text-yellow-400 bg-yellow-400/20 px-2 py-0.5 rounded uppercase tracking-wider">Certified</span>
-          </div>
-          <p className="text-blue-100/60 text-[10px] leading-relaxed text-left">
-            Professional assurance solutions built for Kenya's public and private enterprises.
-          </p>
-        </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center py-32 animate-fade-in">
-          <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase mb-8 backdrop-blur-md animate-fade-in-down hover:scale-105 hover:bg-yellow-400/20 transition-all duration-300"
-            style={{ background: 'rgba(201,168,76,0.25)', border: `1px solid ${GOLD}80`, color: GOLD }}
-          >
-            <Zap size={12} className="animate-pulse" />
-            {settings.hero_badge_text || 'June 2026 Training Programmes Now Open'}
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 drop-shadow-lg animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            {settings.hero_title || 'Empowering People.'}
-            <br />
-            <span className="inline-block relative min-w-[280px]" style={{ color: GOLD }}>
-              Enhancing{' '}
-              <span className={`inline-block transition-all duration-400 transform ${isTransitioning ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}>
-                {phrases[wordIndex]}
-              </span>
-              {/* Sleek dynamic drawing line under the rotated word */}
-              <span className="absolute bottom-1 left-0 w-full h-[3px] rounded-full bg-gradient-to-r from-yellow-500/20 via-yellow-400 to-yellow-500/20 scale-x-100 origin-left transition-transform duration-700" />
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed mb-10 drop-shadow-md animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-            {settings.hero_description || 'Enka Prime Consulting delivers world-class, in-house corporate training across leadership, finance, safety, digital skills and professional development — transforming organisations from within.'}
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-            <button
-              onClick={() => onNavigate('programmes')}
-              className="group flex items-center gap-2 px-8 py-4 font-bold text-base rounded tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.4)] hover:-translate-y-0.5 relative overflow-hidden"
-              style={{ background: GOLD, color: NAVY }}
-            >
-              View Programmes 
-              <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1.5" />
-            </button>
-            <button
-              onClick={() => onNavigate('contact')}
-              className="flex items-center gap-2 px-8 py-4 font-bold text-base rounded tracking-wide border-2 text-white transition-all duration-300 hover:bg-white/10 hover:border-yellow-400/50 backdrop-blur-sm hover:scale-105 hover:-translate-y-0.5"
-              style={{ borderColor: 'rgba(255,255,255,0.4)' }}
-            >
-              Contact Us <ChevronRight size={18} />
-            </button>
-          </div>
-
-          <div id="stats-section" className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-5">
+          {/* Stats section placed beautifully across full width below columns */}
+          <div id="stats-section" className="mt-16 lg:mt-24 grid grid-cols-2 md:grid-cols-4 gap-5 w-full">
             {stats.map((stat, idx) => (
               <div
                 key={stat.label}
