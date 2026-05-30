@@ -155,25 +155,63 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
       {/* About Preview */}
       <section className="py-24 bg-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-1/3 h-full opacity-3"
+        {/* Decorative background accents */}
+        <div className="absolute top-0 right-0 w-1/2 h-full opacity-[0.03]"
           style={{ background: `linear-gradient(135deg, ${GOLD}, transparent)` }} />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full opacity-5"
+          style={{ background: GOLD }} />
+
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="animate-fade-in-left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 transition-all hover:scale-110"
-                style={{ background: `${GOLD}22`, color: GOLD }}>
-                About Enka Prime
+
+          {/* Section badge + title centred */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-5 transition-all hover:scale-110"
+              style={{ background: `${GOLD}22`, color: GOLD }}>
+              About Enka Prime
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold leading-tight" style={{ color: NAVY }}>
+              {settings.about_title || 'Who We Are'}<br />
+              <span style={{ color: GOLD }}>Since Day One</span>
+            </h2>
+          </div>
+
+          {/* Main two-column grid */}
+          <div className="grid lg:grid-cols-2 gap-16 items-start mb-16">
+
+            {/* LEFT: Rich text content */}
+            <div className="animate-fade-in-left space-y-6">
+              <p className="text-gray-600 leading-relaxed text-lg transition-all hover:text-gray-800">
+                {settings.about_description || 'Enka Prime Consulting Ltd is a professional services and organisational improvement firm dedicated to helping organisations strengthen operational systems, improve compliance, enhance accountability, and build workforce capability for sustainable performance. We support both public and private sector institutions through integrated solutions across four core service areas.'}
+              </p>
+              <p className="text-gray-600 leading-relaxed transition-all hover:text-gray-800">
+                {settings.about_extended || 'Founded on the principle that sustainable organisational performance depends on strong systems rather than skills development alone, we combine practical implementation expertise with structured capacity-building methodologies to deliver measurable and lasting results. Every engagement is tailored to the client\'s operational context, every solution is designed for real-world application, every outcome is focused on efficiency, compliance, and institutional improvement.'}
+              </p>
+
+              {/* Four service area bullets */}
+              <div className="grid grid-cols-1 gap-3 pt-2">
+                {[
+                  'Records Digitalisation & Document Management Systems',
+                  'Asset Tagging and Asset Register Development',
+                  'ISO Implementation and Audit Support',
+                  'Training and Capacity Building',
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-3 group">
+                    <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ background: `${GOLD}22` }}>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 text-sm font-medium leading-snug group-hover:text-gray-900 transition-colors">{item}</span>
+                  </div>
+                ))}
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight" style={{ color: NAVY }}>
-                {settings.about_title || 'Delivering Excellence'}<br />
-                <span style={{ color: GOLD }}>Since Day One</span>
-              </h2>
-              <p className="text-gray-600 leading-relaxed mb-6 text-lg transition-all hover:text-gray-800">
-                {settings.about_description || 'Enka Prime Consulting Ltd is a professional corporate training firm committed to empowering individuals and organisations through high-impact, practical skill development programmes.'}
+
+              {/* Pull quote */}
+              <p className="text-gray-500 text-sm italic border-l-4 pl-4 py-1 leading-relaxed" style={{ borderColor: GOLD }}>
+                We do not simply deliver training or isolated services — we help organisations build the systems, structures, and capabilities that drive long-term performance and institutional resilience.
               </p>
-              <p className="text-gray-600 leading-relaxed mb-8 transition-all hover:text-gray-800">
-                {settings.about_extended || 'Our trainers bring deep industry experience across leadership, finance, health & safety, digital transformation and professional development.'}
-              </p>
+
               <button
                 onClick={() => onNavigate('about')}
                 className="inline-flex items-center gap-2 px-8 py-3.5 font-bold rounded tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-lg"
@@ -183,20 +221,57 @@ export default function Home({ onNavigate, settings }: HomeProps) {
               </button>
             </div>
 
+            {/* RIGHT: Image composition */}
             <div className="animate-fade-in-right">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
-                <img
-                  src={settings.about_image || "https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg"}
-                  alt="Diverse team"
-                  className="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent" />
-                <div className="absolute inset-0 border-2 rounded-2xl" style={{ borderColor: `${GOLD}40` }} />
+              <div className="relative pb-10 md:pb-0">
+                {/* Main image */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
+                  <img
+                    src={settings.about_image || "https://images.pexels.com/photos/3184431/pexels-photo-3184431.jpeg"}
+                    alt="Professional consulting"
+                    className="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-blue-900/50 to-transparent" />
+                  <div className="absolute inset-0 border-2 rounded-2xl" style={{ borderColor: `${GOLD}40` }} />
+                </div>
+
+                {/* Floating secondary image */}
+                <div className="hidden md:block absolute -bottom-8 -right-5 w-44 h-32 rounded-xl overflow-hidden shadow-xl border-4 border-white">
+                  <img
+                    src="https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg"
+                    alt="Team collaboration"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Floating badge */}
+                <div className="hidden md:flex absolute -top-4 -left-4 rounded-2xl shadow-lg px-5 py-3 items-center gap-3"
+                  style={{ background: NAVY, border: `2px solid ${GOLD}40` }}>
+                  <div className="text-2xl font-bold" style={{ color: GOLD }}>10+</div>
+                  <div className="text-xs text-blue-200 leading-tight">Years of<br/>Excellence</div>
+                </div>
+              </div>
+
+              {/* Stat cards */}
+              <div className="grid grid-cols-3 gap-3 mt-14">
+                {[
+                  { number: '500+', label: 'Organisations Served' },
+                  { number: '4', label: 'Core Service Areas' },
+                  { number: '100%', label: 'Tailored Solutions' },
+                ].map(({ number, label }) => (
+                  <div key={label}
+                    className="text-center py-5 px-3 rounded-xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                    style={{ borderColor: `${GOLD}30`, background: `${NAVY}04` }}>
+                    <div className="text-2xl font-bold mb-1" style={{ color: GOLD }}>{number}</div>
+                    <div className="text-xs text-gray-500 leading-tight">{label}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 }
