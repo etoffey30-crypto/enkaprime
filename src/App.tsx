@@ -39,7 +39,6 @@ function getPageFromHash(): string {
 export default function App() {
   const [currentPage, setCurrentPage] = useState(getPageFromHash);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [formData, setFormData] = useState({ name: '', email: '', organization: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
@@ -180,11 +179,7 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+
 
   useEffect(() => {
     setMenuOpen(false);
@@ -244,7 +239,7 @@ export default function App() {
   const NAVY_COLOR = '#0F2044';
 
   const NavBar = () => (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-custom ${scrolled ? 'bg-white shadow-lg py-3' : 'bg-transparent py-5'}`}>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md py-3 font-custom border-b border-gray-100 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <button onClick={() => handleNavClick({ label: 'Home', href: 'home', link_type: 'page' })} className="flex items-center gap-3">
           <img src={dbSettings.site_logo || "/enkaprime/enkaprime-logo.png"} alt="Enka Prime Consulting Ltd" className="h-11 w-auto object-contain" />
@@ -258,58 +253,38 @@ export default function App() {
                   <button
                     onClick={() => setServicesDropdownOpen(o => !o)}
                     onBlur={() => setTimeout(() => setServicesDropdownOpen(false), 150)}
-                    className={`flex items-center gap-1 text-sm font-semibold tracking-wide transition-colors duration-200 ${
-                      scrolled ? 'text-gray-700 hover:text-yellow-600' : 'text-white/90 hover:text-yellow-400'
-                    }`}
+                    className="flex items-center gap-1 text-sm font-semibold tracking-wide text-gray-700 hover:text-custom-secondary transition-colors duration-200"
                   >
                     {link.label}
                     <ChevronDown size={14} className={`transition-transform duration-200 ${servicesDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* Mega Dropdown */}
+                  {/* Simple Dropdown */}
                   {servicesDropdownOpen && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[480px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
-                      style={{ boxShadow: '0 25px 60px rgba(15,32,68,0.18)' }}>
-                      {/* Header */}
-                      <div className="px-6 py-4 border-b border-gray-100" style={{ background: `${NAVY_COLOR}08` }}>
-                        <div className="text-[10px] font-extrabold tracking-widest uppercase mb-0.5" style={{ color: GOLD_COLOR }}>Consulting Services</div>
-                        <div className="text-sm font-bold" style={{ color: NAVY_COLOR }}>Our Core Service Areas</div>
-                      </div>
-
-                      {/* Service Links */}
-                      <div className="p-3">
-                        {SERVICE_DROPDOWN.map(item => {
-                          const Icon = item.icon;
-                          return (
-                            <button
-                              key={item.href}
-                              onClick={() => { navigate(item.href); setServicesDropdownOpen(false); }}
-                              className="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-150 group text-left"
-                            >
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:scale-110"
-                                style={{ background: `${NAVY_COLOR}0d` }}>
-                                <Icon size={18} style={{ color: NAVY_COLOR }} />
-                              </div>
-                              <div className="flex-1">
-                                <div className="font-bold text-sm group-hover:text-yellow-600 transition-colors" style={{ color: NAVY_COLOR }}>{item.label}</div>
-                                <div className="text-xs text-gray-400 mt-0.5">{item.sub}</div>
-                              </div>
-                              <ChevronDown size={14} className="-rotate-90 text-gray-300 group-hover:text-yellow-500 transition-colors" />
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Footer CTA in dropdown */}
-                      <div className="px-6 py-4 border-t border-gray-100">
-                        <button
-                          onClick={() => { navigate('services'); setServicesDropdownOpen(false); }}
-                          className="w-full py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all hover:scale-[1.02]" 
-                          style={{ background: NAVY_COLOR, color: 'white' }}
-                        >
-                          View All Services Overview
-                        </button>
-                      </div>
+                    <div 
+                      className="absolute top-full left-0 mt-3 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50"
+                      style={{ boxShadow: '0 10px 25px rgba(15,32,68,0.08)' }}
+                    >
+                      {SERVICE_DROPDOWN.map(item => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.href}
+                            onClick={() => { navigate(item.href); setServicesDropdownOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 hover:text-custom-secondary transition-colors group animate-fade-in"
+                          >
+                            <Icon size={15} className="text-gray-400 group-hover:text-custom-secondary transition-colors" />
+                            <span className="font-semibold">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button
+                        onClick={() => { navigate('services'); setServicesDropdownOpen(false); }}
+                        className="w-full px-4 py-2 text-left text-xs font-bold text-custom-primary hover:bg-gray-50 hover:text-custom-secondary transition-colors"
+                      >
+                        View All Services
+                      </button>
                     </div>
                   )}
                 </div>
@@ -319,9 +294,7 @@ export default function App() {
               <button
                 key={link.href}
                 onClick={() => handleNavClick(link)}
-                className={`text-sm font-semibold tracking-wide transition-colors duration-200 ${
-                  scrolled ? 'text-gray-700 hover:text-custom-secondary' : 'text-white/90 hover:text-custom-secondary'
-                }`}
+                className="text-sm font-semibold tracking-wide text-gray-700 hover:text-custom-secondary transition-colors duration-200"
               >
                 {link.label}
               </button>
@@ -336,7 +309,7 @@ export default function App() {
         </div>
 
         <button
-          className={`lg:hidden p-2 rounded ${scrolled ? 'text-gray-800' : 'text-white'}`}
+          className="lg:hidden p-2 rounded text-gray-800 hover:bg-gray-100 transition-colors"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
