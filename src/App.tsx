@@ -140,7 +140,7 @@ export default function App() {
       description: 'Integrated professional solutions that strengthen systems, improve compliance, enhance accountability, and build organisational capacity for sustainable performance.',
       contact_email: dbSettings.contact_email || 'info@enkaprime.com',
       contact_phone: dbSettings.contact_phone || '0200 769 146',
-      linkedin_url: 'https://linkedin.com/company/enkaprime',
+      linkedin_url: dbSettings.linkedin_url || 'https://www.linkedin.com/company/enka-prime-consulting-ltd',
       copyright_text: '© 2026 Enka Prime Consulting Ltd. All rights reserved.',
       tagline: dbSettings.about_tagline || 'Empowering People. Enhancing Performance. Delivering Excellence.'
     };
@@ -159,13 +159,13 @@ export default function App() {
     },
     {
       label: 'LinkedIn',
-      href: footerConfig.linkedin_url || dbSettings.linkedin_url || 'https://linkedin.com/company/enkaprime',
+      href: dbSettings.linkedin_url || footerConfig.linkedin_url || 'https://www.linkedin.com/company/enka-prime-consulting-ltd',
       icon: Linkedin,
       className: 'bg-[#0A66C2] hover:bg-[#084f98]',
     },
     {
       label: 'WhatsApp',
-      href: dbSettings.whatsapp_url || `https://wa.me/${(footerConfig.contact_phone || dbSettings.contact_phone || '0200769146').replace(/\D/g, '')}`,
+      href: dbSettings.whatsapp_url || 'https://wa.me/233200769146',
       icon: MessageCircle,
       className: 'bg-[#25D366] hover:bg-[#1fb557]',
     },
