@@ -12,19 +12,12 @@
   <body>
     <div id="root"></div>
     <script>
-      // Convert path-based routes (e.g. /enkaprime/admin) to hash routes (/enkaprime/#admin)
+      // Convert path-based routes (e.g. /admin) to hash routes (/#admin)
+      // This allows the SPA to work when served from the root domain.
       var path = window.location.pathname;
-      var base = '/enkaprime/';
-      
-      // If path is exactly '/enkaprime' or '/enkaprime/', do absolutely nothing
-      if (path === '/enkaprime' || path === '/enkaprime/') {
-        // No redirect
-      } else if (path.startsWith(base)) {
-        var route = path.substring(base.length);
-        if (route && !route.includes('/assets/') && !route.includes('.')) {
-          window.location.replace(base + '#' + route);
-        }
-      } else if (path !== '/' && !path.includes('/assets/') && !path.includes('.')) {
+
+      // If it's not the root and it doesn't look like an asset or file, redirect to hash route
+      if (path !== '/' && !path.includes('/assets/') && !path.includes('.')) {
         var route = path.slice(1); // remove leading slash
         window.location.replace('/#' + route);
       }
