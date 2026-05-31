@@ -65,6 +65,14 @@ INSERT INTO site_settings (key, value) VALUES
   -- Footer Config (JSON)
   ('footer_config', '{"description":"Professional corporate training that transforms people and organisations.","contact_email":"info@enkaprime.com","contact_phone":"0200 769 146","linkedin_url":"https://linkedin.com/company/enkaprime","copyright_text":"© 2026 Enka Prime Consulting Ltd. All rights reserved.","tagline":"Empowering People. Enhancing Performance. Delivering Excellence."}'),
 
+  -- Social Links
+  ('facebook_url', 'https://facebook.com/enkaprime'),
+  ('whatsapp_url', 'https://wa.me/233200769146'),
+
+  -- Structured lists for UI (JSON arrays)
+  ('service_pillars', '["Records Digitalisation & Document Management","Asset Tagging & Registers","ISO Implementation & Compliance Support","Training & Capacity Building"]'),
+  ('target_industries', '["SMEs & Growing Businesses","Financial & Professional Services","Energy, Construction & Operations","Public Sector & NGOs","Manufacturing & Hospitality","Technology & Telecommunications"]'),
+
   -- Course Modules (empty array default)
   ('course_modules', '[]')
 

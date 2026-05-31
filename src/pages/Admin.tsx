@@ -1538,7 +1538,22 @@ export default function Admin({ onNavigate }: { onNavigate: (page: string) => vo
     };
 
     const saveFooterSettings = async () => {
+      // Save footer_config JSON
       await saveSettingKey('footer_config', JSON.stringify(footerConfig));
+
+      // Also save social links as top-level keys for compatibility
+      if (footerConfig.facebook_url) await saveSettingKey('facebook_url', footerConfig.facebook_url);
+      if (footerConfig.whatsapp_url) await saveSettingKey('whatsapp_url', footerConfig.whatsapp_url);
+
+      // Save service pillars and target industries as JSON arrays (comma-separated input)
+      if (footerConfig.service_pillars) {
+        const pillarsArr = footerConfig.service_pillars.split(',').map((s: string) => s.trim()).filter(Boolean);
+        await saveSettingKey('service_pillars', JSON.stringify(pillarsArr));
+      }
+      if (footerConfig.target_industries) {
+        const indsArr = footerConfig.target_industries.split(',').map((s: string) => s.trim()).filter(Boolean);
+        await saveSettingKey('target_industries', JSON.stringify(indsArr));
+      }
     };
 
     return (
@@ -1575,12 +1590,28 @@ export default function Admin({ onNavigate }: { onNavigate: (page: string) => vo
             <input type="text" value={footerConfig.linkedin_url || ''} onChange={e => handleFooterChange('linkedin_url', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="https://linkedin.com/company/..." />
           </div>
           <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Facebook URL</label>
+            <input type="text" value={footerConfig.facebook_url || ''} onChange={e => handleFooterChange('facebook_url', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="https://facebook.com/yourpage" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">WhatsApp URL / wa.me</label>
+            <input type="text" value={footerConfig.whatsapp_url || ''} onChange={e => handleFooterChange('whatsapp_url', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="https://wa.me/233..." />
+          </div>
+          <div>
             <label className="block text-xs font-semibold text-gray-500 mb-1">Footer Tagline</label>
             <input type="text" value={footerConfig.tagline || ''} onChange={e => handleFooterChange('tagline', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
           </div>
           <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-gray-500 mb-1">Copyright Notice text</label>
             <input type="text" value={footerConfig.copyright_text || ''} onChange={e => handleFooterChange('copyright_text', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Service Pillars (comma separated)</label>
+            <textarea rows={2} value={footerConfig.service_pillars || ''} onChange={e => handleFooterChange('service_pillars', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="Records Digitalisation, Asset Tagging, ISO Implementation, Training" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Target Industries (comma separated)</label>
+            <textarea rows={2} value={footerConfig.target_industries || ''} onChange={e => handleFooterChange('target_industries', e.target.value)} className="w-full px-3 py-2 rounded-lg border text-sm" placeholder="SMEs,Financial Services,Construction,Public Sector" />
           </div>
         </div>
       </div>
