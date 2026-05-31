@@ -140,7 +140,7 @@ export default function App() {
       description: 'Integrated professional solutions that strengthen systems, improve compliance, enhance accountability, and build organisational capacity for sustainable performance.',
       contact_email: dbSettings.contact_email || 'info@enkaprime.com',
       contact_phone: dbSettings.contact_phone || '0200 769 146',
-      linkedin_url: dbSettings.linkedin_url || 'https://www.linkedin.com/company/enka-prime-consulting-ltd',
+      linkedin_url: dbSettings.linkedin_url || 'https://www.linkedin.com/search/results/companies/?keywords=enkaprime',
       copyright_text: '© 2026 Enka Prime Consulting Ltd. All rights reserved.',
       tagline: dbSettings.about_tagline || 'Empowering People. Enhancing Performance. Delivering Excellence.'
     };
@@ -159,7 +159,7 @@ export default function App() {
     },
     {
       label: 'LinkedIn',
-      href: dbSettings.linkedin_url || footerConfig.linkedin_url || 'https://www.linkedin.com/company/enka-prime-consulting-ltd',
+      href: dbSettings.linkedin_url || footerConfig.linkedin_url || 'https://www.linkedin.com/search/results/companies/?keywords=enkaprime',
       icon: Linkedin,
       className: 'bg-[#0A66C2] hover:bg-[#084f98]',
     },
@@ -253,10 +253,10 @@ export default function App() {
   const NAVY_COLOR = '#0F2044';
 
   const NavBar = () => (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md py-3 font-custom border-b border-gray-100 transition-all duration-300">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-white/95 to-white/70 shadow-md py-2 font-custom border-b border-gray-100 transition-all duration-300 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
         <button onClick={() => handleNavClick({ label: 'Home', href: 'home', link_type: 'page' })} className="flex items-center gap-3">
-          <img src={dbSettings.site_logo || "/enkaprime/enkaprime-logo.png"} alt="Enka Prime Consulting Ltd" className="h-14 sm:h-16 w-auto object-contain" />
+          <img src={dbSettings.site_logo || "/enkaprime/enkaprime-logo.png"} alt="Enka Prime Consulting Ltd" className="h-12 sm:h-14 w-auto object-contain" />
         </button>
 
         <div className="hidden lg:flex items-center gap-8">

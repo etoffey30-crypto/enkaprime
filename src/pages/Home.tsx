@@ -132,7 +132,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
   // 1. HERO BANNER SECTION
   const renderHero = () => (
-    <section key="hero" id="hero" className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20">
+    <section key="hero" id="hero" className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-12 lg:pt-16">
       <div className="absolute inset-0">
         <img
           src={settings.hero_image || "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg"}
