@@ -6,6 +6,8 @@ on:
 
 jobs:
   build-deploy:
+    # Prevent the job running when commits are made by this workflow
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,12 +26,27 @@ jobs:
       - name: Add CNAME to build
         run: echo "enkaprime.com" > dist/CNAME
 
-      - name: Deploy
+      - name: Deploy to gh-pages branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: dist
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to /docs on main (for Pages configured to /docs)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf docs || true
+          mkdir -p docs
+          cp -a dist/. docs/
+          git add docs CNAME
+          if git diff --staged --quiet; then
+            echo "No changes to commit to /docs"
+          else
+            git commit -m "ci(pages): update /docs from dist [skip ci]"
+            git push origin HEAD:main
+          fi
 name: Deploy to GitHub Pages
 
 on:
