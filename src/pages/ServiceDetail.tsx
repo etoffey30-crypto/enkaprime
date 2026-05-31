@@ -264,8 +264,13 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
 
             {/* Visual accent panel */}
             <div className="relative hidden lg:block">
-              <div className="rounded-3xl overflow-hidden h-[500px] shadow-2xl">
-                <img src={data.heroImage} alt="Service visual" className="w-full h-full object-cover" />
+              <div className="rounded-3xl overflow-hidden h-[500px] shadow-2xl bg-gray-100 relative">
+                <img
+                  src={data.heroImage}
+                  alt="Service visual"
+                  className="w-full h-full object-contain object-center"
+                  style={{ backgroundColor: 'rgba(249,250,251,1)' }}
+                />
                 <div className="absolute inset-0 rounded-3xl"
                   style={{ background: `linear-gradient(to top, ${NAVY}99, transparent 50%)` }} />
               </div>
