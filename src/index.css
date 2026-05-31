@@ -6,6 +6,8 @@
   --primary-color: #0F2044;
   --secondary-color: #C9A84C;
   --accent-color: #f3f4f6;
+  --bg-gradient-start: #ffffff;
+  --bg-gradient-end: #f8fafc;
   --base-font-size: 16px;
   --font-family: 'Inter', sans-serif;
   --spacing-multiplier: 1;
@@ -15,7 +17,9 @@
 body {
   font-family: var(--font-family);
   font-size: var(--base-font-size);
-  background-color: #ffffff;
+  background-color: var(--bg-gradient-start);
+  background-image: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  background-attachment: fixed;
   color: #1f2937;
 }
 
@@ -212,6 +216,29 @@ svg {
     }
   }
 
+  /* Fly-in animation for feature points */
+  @keyframes flyInUp {
+    0% { opacity: 0; transform: translateY(30px) scale(0.98); }
+    60% { opacity: 1; transform: translateY(-6px) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .fly-target {
+    will-change: transform, opacity;
+    transition: box-shadow 200ms ease;
+    cursor: pointer;
+  }
+
+  @keyframes flyIn {
+    0% { opacity: 0; transform: translate3d(60px, 40px, 0) rotateZ(-6deg) scale(0.98); }
+    50% { opacity: 1; transform: translate3d(-8px, -6px, 0) rotateZ(2deg) scale(1.02); }
+    100% { opacity: 1; transform: translate3d(0,0,0) rotateZ(0deg) scale(1); }
+  }
+
+  .fly-in {
+    animation: flyIn 700ms cubic-bezier(.22,.9,.3,1) both;
+  }
+
   @keyframes bounceIn {
     0% {
       opacity: 0;
@@ -341,6 +368,15 @@ svg {
 
   .gradient-primary {
     @apply bg-gradient-to-br from-blue-600 to-blue-900;
+  }
+
+  /* Subtle site-wide white/gray gradient variants to replace flat whites */
+  .bg-white {
+    background-image: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%);
+  }
+
+  .bg-gray-50 {
+    background-image: linear-gradient(180deg, rgba(249,250,251,1) 0%, rgba(244,246,248,1) 100%);
   }
 
   /* Glass morphism */
