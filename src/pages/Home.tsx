@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { 
-  ArrowRight, ChevronRight, Zap, Sparkles, Award, Shield, 
+  ArrowRight, ChevronRight, Zap, Award, Shield, 
   TrendingUp, Monitor, BookOpen, CheckCircle, Building, 
   Briefcase, Landmark, HardHat, Database, Users2 
 } from 'lucide-react';
@@ -13,23 +13,23 @@ interface HomeProps {
 
 // Fallback services
 const FALLBACK_SERVICES = [
-  { code: 'LMT', title: 'Leadership & Management', description: 'Strategic leadership, supervisory excellence, accountability and decision-making for modern managers.', image_url: 'https://images.pexels.com/photos/3184431/pexels-photo-3184431.jpeg' },
-  { code: 'CST', title: 'Customer Service Training', description: 'Excellence in client relationship management, frontline service delivery and building customer-centric cultures.', image_url: 'https://images.pexels.com/photos/3808517/pexels-photo-3808517.jpeg' },
-  { code: 'HSE', title: 'Health, Safety & Environment', description: 'Workplace safety, risk prevention, defensive driving and fleet management for organisational compliance.', image_url: 'https://images.pexels.com/photos/3935702/pexels-photo-3935702.jpeg' },
+  { code: 'records', title: 'Records Digitalisation', description: 'Structured digital records, document workflows, metadata tagging, and secure retrieval systems for stronger institutional memory.', image_url: 'https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg' },
+  { code: 'asset', title: 'Asset Tagging & Registers', description: 'Physical asset verification, barcode or QR tagging, register development, and lifecycle visibility across locations.', image_url: 'https://images.pexels.com/photos/6169668/pexels-photo-6169668.jpeg' },
+  { code: 'iso', title: 'ISO Implementation Support', description: 'Gap assessments, process documentation, internal audit support, and ISO-aligned systems for operational consistency.', image_url: 'https://images.pexels.com/photos/5716001/pexels-photo-5716001.jpeg' },
+  { code: 'training', title: 'Training & Capacity Building', description: 'Custom in-house programmes that strengthen workforce capability, compliance culture, and practical workplace performance.', image_url: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg' },
 ];
 
 // Industries served data
 const INDUSTRIES = [
-  { icon: Briefcase, title: 'Corporate & Consulting', desc: 'Accelerating business development, strategic management, and project execution.' },
-  { icon: Landmark, title: 'Financial & Banking', desc: 'Strengthening internal controls, compliance reporting, and client relationship management.' },
-  { icon: HardHat, title: 'Oil & Gas / Energy', desc: 'Upholding strict HSE protocols, risk mitigation, and technical supervisory competence.' },
-  { icon: Database, title: 'Digital & Telecommunications', desc: 'Building data analysis skills, Excel automation, and high-performance digital workflows.' },
-  { icon: Users2, title: 'Public Sector & NGOs', desc: 'Establishing transparent systems, compliance records, and public leadership accountability.' },
-  { icon: Building, title: 'Manufacturing & Hospitality', desc: 'Embedding customer-centric frontline teams and efficient operational standards.' },
+  { icon: Briefcase, title: 'SMEs & Growing Businesses', desc: 'Practical systems, records, compliance, and people-capability support for structured growth.', image: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg' },
+  { icon: Landmark, title: 'Financial & Professional Services', desc: 'Governance, documentation, control, and audit-readiness support for regulated environments.', image: 'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg' },
+  { icon: HardHat, title: 'Energy, Construction & Operations', desc: 'Asset visibility, compliance routines, safety documentation, and operational accountability.', image: 'https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg' },
+  { icon: Users2, title: 'Public Sector & NGOs', desc: 'Transparent institutional systems, compliant records, and capacity-building for public value.', image: 'https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg' },
+  { icon: Building, title: 'Manufacturing & Hospitality', desc: 'Reliable workflows, frontline standards, asset controls, and customer-facing team performance.', image: 'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg' },
+  { icon: Database, title: 'Technology & Telecommunications', desc: 'Data discipline, digital records, process controls, and high-performance operational routines.', image: 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg' },
 ];
 
 export default function Home({ onNavigate, settings }: HomeProps) {
-  const [dbStats, setDbStats] = useState<any[]>([]);
   const [dbServices, setDbServices] = useState<any[]>([]);
   const [visibleStats, setVisibleStats] = useState<boolean>(false);
 
@@ -76,11 +76,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
   }, [phrases.length]);
 
   const loadData = useCallback(async () => {
-    const [statsRes, servicesRes] = await Promise.all([
-      supabase.from('stats').select('*').eq('is_active', true).order('sort_order'),
-      supabase.from('services').select('*').eq('is_active', true).order('sort_order'),
-    ]);
-    if (statsRes.data) setDbStats(statsRes.data);
+    const servicesRes = await supabase.from('services').select('*').eq('is_active', true).order('sort_order');
     if (servicesRes.data && servicesRes.data.length > 0) setDbServices(servicesRes.data);
   }, []);
 
@@ -100,16 +96,14 @@ export default function Home({ onNavigate, settings }: HomeProps) {
     return () => observer.disconnect();
   }, []);
 
-  const stats = dbStats.length > 0
-    ? dbStats.map(s => ({ value: s.value, label: s.label }))
-    : [
-        { value: '500+', label: 'Professionals Trained' },
-        { value: '15+', label: 'Training Programmes' },
-        { value: '6', label: 'Core Disciplines' },
-        { value: '100%', label: 'In-House Delivery' },
-      ];
+  const stats = [
+    { value: '20+', label: 'SMEs Supported' },
+    { value: '15+', label: 'Professional Programmes' },
+    { value: '4', label: 'Core Service Pillars' },
+    { value: '100%', label: 'Customized Solutions' },
+  ];
 
-  const services = dbServices.length > 0 ? dbServices : FALLBACK_SERVICES;
+  const services = (dbServices.length > 0 ? dbServices : FALLBACK_SERVICES).slice(0, 4);
 
   // Parse modular homepage order and visibility
   const getModules = () => {
@@ -138,7 +132,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
   // 1. HERO BANNER SECTION
   const renderHero = () => (
-    <section key="hero" id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section key="hero" id="hero" className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20">
       <div className="absolute inset-0">
         <img
           src={settings.hero_image || "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg"}
@@ -173,24 +167,24 @@ export default function Home({ onNavigate, settings }: HomeProps) {
         <div className="absolute bottom-20 right-10 w-72 h-72 bg-yellow-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-float opacity-40 animate-delay-300" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 lg:py-32 flex flex-col justify-center min-h-screen w-full animate-fade-in">
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center w-full mt-10 lg:mt-0">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-32 flex flex-col justify-center min-h-[100svh] w-full animate-fade-in">
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-8 items-center justify-center w-full mt-6 lg:mt-0">
           
           {/* Headline & CTAs */}
-          <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left w-full">
+          <div className="lg:col-span-8 lg:col-start-3 flex flex-col items-center text-center w-full">
             <div
-              className="button-custom inline-flex items-center gap-2 px-4 py-2 text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md animate-fade-in-down hover:scale-105 hover:bg-yellow-400/20 transition-all duration-300 self-center lg:self-start border border-custom-secondary/40"
+              className="button-custom inline-flex items-center gap-2 px-4 py-2 text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md animate-fade-in-down hover:scale-105 hover:bg-yellow-400/20 transition-all duration-300 self-center border border-custom-secondary/40"
               style={{ background: 'rgba(201,168,76,0.25)', color: 'var(--secondary-color)' }}
             >
               <Zap size={12} className="animate-pulse text-custom-secondary" />
               {settings.hero_badge_text || 'June 2026 Training Programmes Now Open'}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight mb-4 drop-shadow-lg animate-fade-in-up text-center lg:text-left" style={{ animationDelay: '100ms' }}>
+            <h1 className="text-4xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight mb-4 drop-shadow-lg animate-fade-in-up text-center" style={{ animationDelay: '100ms' }}>
               {settings.hero_title || 'Empowering People.'}
             </h1>
 
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6 drop-shadow-md animate-fade-in-up flex items-center gap-2 text-center lg:text-left text-custom-secondary animate-delay-200" style={{ animationDelay: '200ms' }}>
+            <h2 className="text-2xl sm:text-2xl md:text-3xl font-bold mb-6 drop-shadow-md animate-fade-in-up flex flex-wrap items-center justify-center gap-2 text-center text-custom-secondary animate-delay-200" style={{ animationDelay: '200ms' }}>
               Enhancing{' '}
               <span className="relative inline-block min-w-[140px] text-left">
                 <span className={`inline-block transition-all duration-400 transform ${isTransitioning ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'}`}>
@@ -200,11 +194,11 @@ export default function Home({ onNavigate, settings }: HomeProps) {
               </span>
             </h2>
 
-            <p className="text-base md:text-lg text-blue-100 max-w-xl mb-8 leading-relaxed drop-shadow-md animate-fade-in-up text-center lg:text-left" style={{ animationDelay: '300ms' }}>
+            <p className="text-base md:text-lg text-blue-100 max-w-2xl mb-8 leading-relaxed drop-shadow-md animate-fade-in-up text-center" style={{ animationDelay: '300ms' }}>
               {settings.hero_description || 'Enka Prime Consulting delivers world-class, in-house corporate training across leadership, finance, safety, digital skills and professional development — transforming organisations from within.'}
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 animate-fade-in-up w-full sm:w-auto" style={{ animationDelay: '400ms' }}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up w-full sm:w-auto" style={{ animationDelay: '400ms' }}>
               <button
                 onClick={() => onNavigate('programmes')}
                 className="button-custom bg-custom-secondary text-custom-primary group flex items-center justify-center gap-2 px-8 py-4 font-bold text-base tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(201,168,76,0.4)] hover:-translate-y-0.5 relative overflow-hidden w-full sm:w-auto"
@@ -221,107 +215,30 @@ export default function Home({ onNavigate, settings }: HomeProps) {
             </div>
           </div>
 
-          {/* Premium Glassmorphic Console Dashboard */}
-          <div className="lg:col-span-5 hidden lg:flex items-center justify-end w-full animate-fade-in-right" style={{ animationDelay: '200ms' }}>
-            <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
-              <div className="absolute inset-0 bg-yellow-500/10 rounded-full filter blur-3xl animate-pulse-slow" />
-              
-              <div className="relative w-full bg-slate-950/45 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl flex flex-col gap-5 animate-float select-none">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-red-500/80" />
-                    <div className="w-2 h-2 rounded-full bg-yellow-500/80" />
-                    <div className="w-2 h-2 rounded-full bg-emerald-500/80" />
-                  </div>
-                  <span className="text-[9px] text-blue-200/50 font-mono tracking-wider">ENKAPRIME_CONSOLE_V2.0</span>
-                </div>
-
-                {/* Active Training Widget */}
-                <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 transition-all duration-300 hover:border-yellow-500/20">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[9px] text-custom-secondary font-bold uppercase tracking-wider">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Active Training
-                    </span>
-                    <span className="text-[8px] text-blue-200 bg-white/10 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Leadership</span>
-                  </div>
-                  <h4 className="text-white text-xs font-semibold leading-relaxed text-left">
-                    {settings.hero_widget_left_title || 'Records Digitalisation & Document Management'}
-                  </h4>
-                  <div className="flex items-center justify-between mt-1">
-                    <div className="flex -space-x-1.5">
-                      {[
-                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=60&q=80',
-                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=60&q=80',
-                        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=60&q=80'
-                      ].map((src, i) => (
-                        <img key={i} src={src} className="w-5.5 h-5.5 rounded-full border border-slate-900 object-cover" alt="Student avatar" />
-                      ))}
-                      <div className="w-5.5 h-5.5 rounded-full bg-custom-secondary text-[8px] font-bold text-slate-900 flex items-center justify-center border border-slate-900">+48</div>
-                    </div>
-                    <span className="text-[10px] font-bold text-custom-secondary flex items-center gap-1">
-                      <Sparkles size={10} className="text-custom-secondary animate-pulse" />
-                      Class Active
-                    </span>
-                  </div>
-                  <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-1">
-                    <div className="bg-gradient-to-r from-yellow-500 to-amber-400 h-full rounded-full animate-pulse" style={{ width: '74%' }} />
-                  </div>
-                </div>
-
-                {/* Audit success widget */}
-                <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 flex items-center justify-between transition-all duration-300 hover:border-yellow-500/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-custom-secondary font-bold text-sm shadow-inner">
-                      ✓
-                    </div>
-                    <div className="text-left">
-                      <h4 className="text-white text-xs font-bold leading-tight">
-                        {settings.hero_widget_right_title || '100% Audit Pass Rate'}
-                      </h4>
-                      <p className="text-[10px] text-blue-200">
-                        {settings.hero_widget_right_desc || 'ISO 9001 / 27001 Implementation'}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[8px] font-bold text-custom-secondary bg-yellow-400/20 px-2 py-0.5 rounded-full uppercase tracking-wider border border-yellow-500/20">
-                    Certified
-                  </span>
-                </div>
-              </div>
-              
-              <div className="absolute -bottom-3 -left-3 bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-900 font-bold text-[10px] px-3.5 py-2 rounded-xl shadow-xl flex items-center gap-1.5 animate-bounce"
-                   style={{ animationDuration: '4s' }}>
-                <Zap size={10} className="fill-slate-900" />
-                <span>10+ Years Excellence</span>
-              </div>
-            </div>
-          </div>
-
         </div>
 
         {/* Stats counter */}
-        <div id="stats-section" className="mt-16 lg:mt-24 grid grid-cols-2 md:grid-cols-4 gap-5 w-full">
+        <div id="stats-section" className="mt-10 lg:mt-24 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5 w-full">
           {stats.map((stat, idx) => (
             <div
               key={stat.label}
-              className="group text-center p-6 rounded-2xl backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:bg-white/12 hover:border-custom-secondary hover:shadow-[0_15px_30px_rgba(0,0,0,0.2)]"
+              className="group text-center p-4 sm:p-6 rounded-xl sm:rounded-2xl backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:bg-white/12 hover:border-custom-secondary hover:shadow-[0_15px_30px_rgba(0,0,0,0.2)]"
               style={{
                 background: 'rgba(255,255,255,0.08)',
                 border: `1px solid rgba(201,168,76,0.3)`,
                 animation: visibleStats ? `slideInUp 0.6s ease-out ${idx * 100}ms both` : 'none'
               }}
             >
-              <div className="text-3xl md:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300 text-custom-secondary">
+              <div className="text-2xl md:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300 text-custom-secondary">
                 {stat.value}
               </div>
-              <div className="text-sm text-blue-200 font-medium group-hover:text-white transition-colors duration-300">{stat.label}</div>
+              <div className="text-xs sm:text-sm text-blue-200 font-medium group-hover:text-white transition-colors duration-300">{stat.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300 cursor-pointer z-10"
+      <div className="hidden sm:flex absolute bottom-8 left-1/2 -translate-x-1/2 flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300 cursor-pointer z-10"
            onClick={() => {
              const nextSection = document.getElementById('hero')?.nextElementSibling;
              nextSection?.scrollIntoView({ behavior: 'smooth' });
@@ -336,7 +253,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
   // 2. DISCIPLINE / CALL TO ACTION BANNER
   const renderCTA = () => (
-    <section key="cta" className="py-20 relative overflow-hidden">
+    <section key="cta" className="py-14 sm:py-20 relative overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={settings.cta_image || "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg"}
@@ -346,19 +263,19 @@ export default function Home({ onNavigate, settings }: HomeProps) {
         <div className="absolute inset-0 bg-custom-primary/90" />
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 text-center relative z-10 animate-fade-in">
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10 animate-fade-in">
+        <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
           {settings.cta_title || 'Discover Our'}<br />
-          <span className="text-custom-secondary">{settings.cta_discipline_highlight || 'Training Disciplines'}</span>
+          <span className="text-custom-secondary">{settings.cta_discipline_highlight || 'Service Pillars'}</span>
         </h2>
         <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto drop-shadow-md">
-          {settings.cta_description || 'Six core training areas designed to transform your team\'s capability and performance.'}
+          {settings.cta_description || 'Four integrated service pillars designed to strengthen systems, improve compliance, and build organisational capacity.'}
         </p>
         <button
           onClick={() => onNavigate('services')}
-          className="button-custom bg-custom-secondary text-custom-primary inline-flex items-center gap-2 px-10 py-4 font-bold text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-1"
+          className="button-custom bg-custom-secondary text-custom-primary inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-4 font-bold text-base sm:text-lg tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 w-full sm:w-auto"
         >
-          Explore Services <ArrowRight size={20} />
+          Explore Solutions <ArrowRight size={20} />
         </button>
       </div>
     </section>
@@ -366,27 +283,27 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
   // 3. ABOUT PREVIEW SECTION
   const renderAboutPreview = () => (
-    <section key="about_preview" className="py-24 bg-white relative overflow-hidden">
+    <section key="about_preview" className="py-14 sm:py-24 bg-white relative overflow-hidden">
       <div className="absolute top-0 right-0 w-1/2 h-full opacity-[0.03] bg-gradient-to-br from-custom-secondary to-transparent" />
       <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full opacity-5 bg-custom-secondary" />
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="text-center mb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="text-center mb-10 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-5 transition-all hover:scale-110"
             style={{ background: 'rgba(201,168,76,0.12)', color: 'var(--secondary-color)' }}>
             About Enka Prime
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold leading-tight text-custom-primary">
+          <h2 className="text-3xl md:text-5xl font-bold leading-tight text-custom-primary">
             {settings.about_title || 'Who We Are'}<br />
             <span className="text-custom-secondary">Since Day One</span>
           </h2>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-start mb-16">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start mb-12 sm:mb-16">
           
           {/* Left Text */}
           <div className="animate-fade-in-left space-y-6 text-left">
-            <p className="text-gray-600 leading-relaxed text-lg transition-all hover:text-gray-800">
+            <p className="text-gray-600 leading-relaxed text-base sm:text-lg transition-all hover:text-gray-800">
               {settings.about_description || 'Enka Prime Consulting Ltd is a professional services and organisational improvement firm dedicated to helping organisations strengthen operational systems, improve compliance, enhance accountability, and build workforce capability for sustainable performance.'}
             </p>
             <p className="text-gray-600 leading-relaxed transition-all hover:text-gray-800">
@@ -425,7 +342,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
                 <img
                   src={settings.about_image || "https://images.pexels.com/photos/3184431/pexels-photo-3184431.jpeg"}
                   alt="Professional consulting"
-                  className="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-60 sm:h-72 object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-900/50 to-transparent" />
               </div>
@@ -441,15 +358,15 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
               {/* Floating badge */}
               <div className="hidden md:flex absolute -top-4 -left-4 rounded-2xl shadow-lg px-5 py-3 items-center gap-3 bg-custom-primary border border-custom-secondary/35">
-                <div className="text-2xl font-bold text-custom-secondary">10+</div>
-                <div className="text-xs text-blue-200 leading-tight text-left">Years of<br/>Excellence</div>
+                <div className="text-sm font-bold text-custom-secondary">PRIME</div>
+                <div className="text-xs text-blue-200 leading-tight text-left">System<br/>Approach®</div>
               </div>
             </div>
 
             {/* Stat mini cards */}
-            <div className="grid grid-cols-3 gap-3 mt-14">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 sm:mt-14">
               {[
-                { number: '500+', label: 'Organisations Served' },
+                { number: '100%', label: 'Professionalism' },
                 { number: '4', label: 'Core Service Areas' },
                 { number: '100%', label: 'Tailored Solutions' },
               ].map(({ number, label }) => (
@@ -470,39 +387,55 @@ export default function Home({ onNavigate, settings }: HomeProps) {
   // 4. DYNAMIC SERVICES GRID MODULE
   const renderServicesBlock = () => {
     // Icons map for database dynamic matching
-    const iconMap: Record<string, any> = { 
+    const iconMap: Record<string, any> = {
+      records: Database,
+      asset: Briefcase,
+      iso: Shield,
+      training: Users2,
       LMT: Users2, CST: Award, HSE: Shield, AFT: TrendingUp, DDT: Monitor, GEN: BookOpen 
+    };
+    const imageMap: Record<string, string> = {
+      records: 'https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg',
+      asset: 'https://images.pexels.com/photos/6169668/pexels-photo-6169668.jpeg',
+      iso: 'https://images.pexels.com/photos/5716001/pexels-photo-5716001.jpeg',
+      training: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg',
+      LMT: 'https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg',
+      CST: 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg',
+      HSE: 'https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg',
+      AFT: 'https://images.pexels.com/photos/669615/pexels-photo-669615.jpeg',
+      DDT: 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg',
+      GEN: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg',
     };
 
     return (
-      <section key="services" className="py-24 bg-gray-50 relative overflow-hidden">
+    <section key="services" className="py-14 sm:py-24 bg-gray-50 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-400/5 rounded-full blur-3xl" />
         
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="text-center mb-10 sm:mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-5"
               style={{ background: 'rgba(201,168,76,0.12)', color: 'var(--secondary-color)' }}>
               Our Capabilities
             </div>
-            <h2 className="text-4xl font-bold text-custom-primary">
-              Core Training <span className="text-custom-secondary">Disciplines</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-custom-primary">
+              Core Service <span className="text-custom-secondary">Pillars</span>
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto mt-3 text-sm">
-              Tailored learning structures designed to resolve operational friction and elevate personnel performance.
+              Tailored service solutions to resolve operational friction and elevate workforce performance.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
             {services.slice(0, 6).map((service, idx) => {
               const Icon = iconMap[service.code] || BookOpen;
               return (
                 <div
                   key={service.code}
-                  className="group relative overflow-hidden rounded-2xl shadow-md transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border border-gray-100 flex flex-col bg-white text-left hover:border-custom-secondary/40"
+                  className="group relative overflow-hidden rounded-xl sm:rounded-2xl shadow-md transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border border-gray-100 flex flex-col bg-white text-left hover:border-custom-secondary/40"
                 >
                   <div className="relative h-48 overflow-hidden bg-gray-200">
                     <img
-                      src={service.image_url}
+                      src={imageMap[service.code] || service.image_url}
                       alt={service.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
@@ -513,10 +446,10 @@ export default function Home({ onNavigate, settings }: HomeProps) {
                     </div>
                   </div>
 
-                  <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
                     <div>
                       <span className="text-xs font-bold tracking-widest uppercase text-custom-secondary mb-1.5 block">
-                        {service.code} Discipline
+                        Service Pillar
                       </span>
                       <h3 className="text-lg font-bold text-custom-primary mb-2.5 transition-colors duration-300 group-hover:text-custom-secondary">
                         {service.title}
@@ -544,39 +477,49 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
   // 5. NEW STUNNING INDUSTRIES SERVED MODULE
   const renderIndustriesBlock = () => (
-    <section key="industries" className="py-24 bg-white relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+    <section key="industries" className="py-14 sm:py-24 bg-white relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-5"
             style={{ background: 'rgba(201,168,76,0.12)', color: 'var(--secondary-color)' }}>
             Sectors We Serve
           </div>
-          <h2 className="text-4xl font-bold text-custom-primary">
-            Targeted Solutions by <span className="text-custom-secondary">Industry</span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-custom-primary">
+            Target <span className="text-custom-secondary">Industry</span>
           </h2>
           <p className="text-gray-500 max-w-xl mx-auto mt-3 text-sm">
-            We adapt our curriculum to match the unique operational standards and compliance needs of various sectors.
+            We adapt our solutions to match the unique operational standards and compliance needs of each sector.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {INDUSTRIES.map((ind, idx) => {
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
+          {INDUSTRIES.map((ind) => {
             const Icon = ind.icon;
             return (
               <div 
                 key={ind.title}
-                className="p-8 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-custom-secondary/40 transition-all duration-300 text-left hover:shadow-xl hover:-translate-y-1.5 group"
+                className="group overflow-hidden rounded-xl border border-gray-100 bg-white text-left shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-custom-secondary/40 hover:shadow-xl"
               >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-custom-primary/5 text-custom-primary mb-5 group-hover:bg-custom-secondary group-hover:text-white transition-colors duration-300">
-                  <Icon size={22} />
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={ind.image}
+                    alt={ind.title}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-custom-primary/90 via-custom-primary/30 to-transparent" />
+                  <div className="absolute bottom-4 left-4 flex h-11 w-11 items-center justify-center rounded-xl bg-white/95 text-custom-primary shadow-lg transition-colors duration-300 group-hover:bg-custom-secondary group-hover:text-white">
+                    <Icon size={21} />
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-custom-primary mb-2 group-hover:text-custom-secondary transition-colors duration-300">
-                  {ind.title}
-                </h3>
-                <p className="text-gray-600 text-xs leading-relaxed">
-                  {ind.desc}
-                </p>
+                <div className="p-6">
+                  <h3 className="mb-2 text-lg font-bold text-custom-primary transition-colors duration-300 group-hover:text-custom-secondary">
+                    {ind.title}
+                  </h3>
+                  <p className="text-xs leading-relaxed text-gray-600">
+                    {ind.desc}
+                  </p>
+                </div>
               </div>
             );
           })}
@@ -587,34 +530,50 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
   // 6. WHY CHOOSE US HIGHLIGHTS MODULE
   const renderWhyChooseUsBlock = () => (
-    <section key="why_choose_us" className="py-24 bg-gray-50 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+    <section key="why_choose_us" className="py-14 sm:py-24 bg-gray-50 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-5"
             style={{ background: 'rgba(201,168,76,0.12)', color: 'var(--secondary-color)' }}>
             The Enka Advantage
           </div>
-          <h2 className="text-4xl font-bold text-custom-primary animate-delay-100">
+          <h2 className="text-3xl sm:text-4xl font-bold text-custom-primary animate-delay-100">
             Why Partner With <span className="text-custom-secondary">Enka Prime?</span>
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-5 sm:gap-6">
           {[
-            { title: 'In-House Convenience', desc: 'All sessions delivered directly at your organization\'s facility to build team synergy.' },
-            { title: 'Actionable & Practical', desc: 'We skip theoretical bloat, focusing entirely on workflows, checklists, and execution.' },
-            { title: 'Deep Industry Experts', desc: 'Our corporate trainers are seasoned executives who have managed complex organizational frameworks.' },
-            { title: 'Structured Systems Focus', desc: 'We address structural capability alongside personal skills to drive long-term resilience.' }
-          ].map((item, idx) => (
+            {
+              title: 'Practical, Results-Oriented Solutions',
+              desc: 'We focus on operational improvements that are realistic, measurable, and aligned with how organisations actually work.',
+            },
+            {
+              title: 'Multi-Disciplinary Expertise',
+              desc: 'Our integrated service model combines records management, ISO systems support, asset management, compliance improvement, and corporate training.',
+            },
+            {
+              title: 'ISO-Aligned Professional Standards',
+              desc: 'Our methodologies are guided by recognised standards and best practices that strengthen governance, accountability, and consistency.',
+            },
+            {
+              title: 'Tailored Institutional Support',
+              desc: 'We customise every engagement to your structure, industry, operational challenges, and strategic objectives.',
+            },
+            {
+              title: 'Professionalism, Integrity & Confidentiality',
+              desc: 'We maintain high standards of professionalism, ethical conduct, and confidentiality across all client engagements and organisational data handling.',
+            },
+          ].map((item) => (
             <div 
               key={item.title}
-              className="bg-white p-7 rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-custom-secondary/40 transition-all duration-300 text-left group"
+              className="bg-white p-6 sm:p-7 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-custom-secondary/40 transition-all duration-300 text-left group"
             >
               <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-custom-secondary/15 text-custom-secondary mb-4 group-hover:scale-110 transition-transform">
                 <CheckCircle size={20} />
               </div>
-              <h4 className="font-bold text-sm text-custom-primary mb-2 group-hover:text-custom-secondary transition-colors">
+              <h4 className="font-bold text-sm text-custom-primary mb-3 group-hover:text-custom-secondary transition-colors">
                 {item.title}
               </h4>
               <p className="text-gray-500 text-xs leading-relaxed">

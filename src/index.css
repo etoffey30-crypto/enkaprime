@@ -19,6 +19,21 @@ body {
   color: #1f2937;
 }
 
+body.mobile-menu-open {
+  overflow: hidden;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
 /* Custom dynamic design system styling */
 .bg-custom-primary {
   background-color: var(--primary-color) !important;
@@ -345,5 +360,38 @@ body {
   /* Text animations */
   .text-glow {
     text-shadow: 0 0 10px rgba(201, 168, 76, 0.5);
+  }
+}
+
+@media (max-width: 640px) {
+  section {
+    scroll-margin-top: 76px;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: anywhere;
+  }
+
+  p,
+  li,
+  span,
+  a {
+    overflow-wrap: anywhere;
+  }
+
+  .rounded-2xl,
+  .rounded-3xl {
+    border-radius: 0.75rem;
+  }
+
+  .shadow-2xl {
+    box-shadow: 0 18px 40px rgba(15, 32, 68, 0.16);
   }
 }

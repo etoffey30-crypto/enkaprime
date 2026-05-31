@@ -47,7 +47,7 @@ export default function Training({ onNavigate }: TrainingProps) {
     <div className="min-h-screen bg-white font-sans pt-20 overflow-hidden">
 
       {/* ── HERO ── */}
-      <section className="relative py-28 overflow-hidden">
+      <section className="relative py-16 sm:py-28 overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg"
@@ -59,7 +59,7 @@ export default function Training({ onNavigate }: TrainingProps) {
             style={{ backgroundImage: 'linear-gradient(rgba(201,168,76,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.3) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <button
             onClick={() => onNavigate('services')}
             className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-lg text-white font-semibold hover:bg-white/10 transition-colors"
@@ -73,14 +73,14 @@ export default function Training({ onNavigate }: TrainingProps) {
             <GraduationCap size={12} /> Service 04
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white mb-5 leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-5 leading-tight">
             Training & <span style={{ color: GOLD }}>Capacity Building</span>
           </h1>
-          <p className="text-blue-100 text-xl max-w-2xl leading-relaxed">
+          <p className="text-blue-100 text-lg sm:text-xl max-w-2xl leading-relaxed">
             Bespoke in-house corporate training programmes delivered at your premises — building skills that translate directly into workplace results.
           </p>
 
-          <div className="flex flex-wrap gap-4 mt-10">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 mt-8 sm:mt-10">
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white"
               style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
               <BookOpen size={16} style={{ color: GOLD }} />
@@ -101,9 +101,9 @@ export default function Training({ onNavigate }: TrainingProps) {
       </section>
 
       {/* ── OVERVIEW ── */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-3 gap-8">
+      <section className="py-14 sm:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid md:grid-cols-3 gap-5 sm:gap-8">
             {[
               { icon: GraduationCap, title: 'In-House Delivery', desc: 'All programmes delivered at your organisation — no travel, no disruption, total customisation.' },
               { icon: Star, title: 'Certified Trainers', desc: 'Experienced professionals with deep sector knowledge across all training disciplines.' },
@@ -111,7 +111,7 @@ export default function Training({ onNavigate }: TrainingProps) {
             ].map(item => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className="bg-white p-8 rounded-2xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div key={item.title} className="bg-white p-6 sm:p-8 rounded-xl sm:rounded-2xl border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: `${GOLD}20` }}>
                     <Icon size={22} style={{ color: GOLD }} />
                   </div>
@@ -126,17 +126,17 @@ export default function Training({ onNavigate }: TrainingProps) {
 
       {/* ── FEATURED PROGRAMMES ── */}
       {featured.length > 0 && (
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-6">
+        <section className="py-14 sm:py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex items-center gap-3 mb-10">
               <Star size={20} className="fill-current" style={{ color: GOLD, fill: GOLD }} />
               <h2 className="text-2xl font-extrabold" style={{ color: NAVY }}>Featured Programmes</h2>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {featured.map(prog => {
                 const meta = CATEGORY_META[prog.category] || CATEGORY_META['General'];
                 return (
-                  <div key={prog.id} className="p-6 rounded-2xl border hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+                  <div key={prog.id} className="p-5 sm:p-6 rounded-xl sm:rounded-2xl border hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
                     style={{ borderColor: `${GOLD}40`, background: `${GOLD}05` }}>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg" style={{ background: meta.bg, color: meta.color }}>
@@ -168,8 +168,8 @@ export default function Training({ onNavigate }: TrainingProps) {
       )}
 
       {/* ── TRAINING CATALOGUE ── */}
-      <section id="training-catalogue" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="training-catalogue" className="py-14 sm:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
             <div>
               <h2 className="text-2xl font-extrabold mb-1" style={{ color: NAVY }}>
@@ -184,7 +184,7 @@ export default function Training({ onNavigate }: TrainingProps) {
           </div>
 
           {/* Category filter */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex gap-2 mb-8 -mx-4 px-4 overflow-x-auto pb-2 sm:mx-0 sm:px-0 sm:flex-wrap sm:overflow-visible">
             {CATEGORIES.map(cat => {
               const meta = CATEGORY_META[cat];
               const isActive = activeCategory === cat;
@@ -192,7 +192,7 @@ export default function Training({ onNavigate }: TrainingProps) {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className="px-4 py-2 text-xs font-bold rounded-full transition-all duration-200"
+                  className="px-4 py-2 text-xs font-bold rounded-full transition-all duration-200 whitespace-nowrap"
                   style={isActive
                     ? { background: NAVY, color: 'white' }
                     : meta
@@ -231,9 +231,9 @@ export default function Training({ onNavigate }: TrainingProps) {
                 return (
                   <div
                     key={prog.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 rounded-xl bg-white hover:bg-yellow-50/40 transition-colors duration-200 group border border-gray-100 hover:border-yellow-200"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-3 p-4 sm:p-5 rounded-xl bg-white hover:bg-yellow-50/40 transition-colors duration-200 group border border-gray-100 hover:border-yellow-200"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4">
                       <span className="text-xs font-extrabold tracking-widest px-3 py-1.5 rounded-lg flex-shrink-0"
                         style={{ background: `${NAVY}0d`, color: NAVY }}>
                         {prog.code}
@@ -245,7 +245,7 @@ export default function Training({ onNavigate }: TrainingProps) {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0 pl-2 sm:pl-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 flex-shrink-0 sm:pl-0">
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg" style={{ background: meta.bg, color: meta.color }}>
                         {prog.category}
                       </span>
@@ -254,7 +254,7 @@ export default function Training({ onNavigate }: TrainingProps) {
                       </span>
                       <button
                         onClick={() => onNavigate('contact')}
-                        className="text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        className="text-xs font-bold px-3 py-1.5 rounded-lg sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200"
                         style={{ background: NAVY, color: 'white' }}
                       >
                         Enquire
@@ -269,13 +269,13 @@ export default function Training({ onNavigate }: TrainingProps) {
       </section>
 
       {/* ── REGISTRATION CTA ── */}
-      <section className="py-24 relative overflow-hidden">
+      <section className="py-14 sm:py-24 relative overflow-hidden">
         <div className="absolute inset-0">
           <img src="https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg" alt="Training CTA" className="w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${NAVY}F2, ${NAVY}D0)` }} />
         </div>
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-5">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-5">
             Ready to Upskill <span style={{ color: GOLD }}>Your Team?</span>
           </h2>
           <p className="text-blue-100 text-lg mb-10 max-w-xl mx-auto">
@@ -284,14 +284,14 @@ export default function Training({ onNavigate }: TrainingProps) {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => onNavigate('contact')}
-              className="inline-flex items-center justify-center gap-2 px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               style={{ background: GOLD, color: NAVY }}
             >
               Enroll Your Team <ArrowRight size={18} />
             </button>
             <button
               onClick={() => onNavigate('contact')}
-              className="inline-flex items-center justify-center gap-2 px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105"
+              className="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105"
               style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.25)' }}
             >
               Request Custom Programme

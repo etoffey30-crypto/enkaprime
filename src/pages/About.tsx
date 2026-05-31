@@ -12,7 +12,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
   return (
     <div className="min-h-screen bg-white font-sans pt-20 overflow-hidden">
       {/* Header */}
-      <section className="relative py-20 overflow-hidden">
+      <section className="relative py-16 sm:py-20 overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={settings.about_hero_image || "https://images.pexels.com/photos/3184431/pexels-photo-3184431.jpeg"}
@@ -22,7 +22,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${NAVY}95, ${NAVY}85)` }} />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <button
             onClick={() => onNavigate('home')}
             className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-lg backdrop-blur-sm text-white font-semibold hover:bg-white/10 transition-colors animate-fade-in-down"
@@ -30,29 +30,29 @@ export default function About({ onNavigate, settings }: AboutProps) {
           >
             <ChevronLeft size={18} /> Back to Home
           </button>
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg animate-fade-in-up">
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg animate-fade-in-up">
             About <span style={{ color: GOLD }}>Enka Prime</span>
           </h1>
-          <p className="text-blue-100 text-xl max-w-3xl drop-shadow-md animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+          <p className="text-blue-100 text-lg sm:text-xl max-w-3xl drop-shadow-md animate-fade-in-up" style={{ animationDelay: '100ms' }}>
             Transforming organisations through world-class, practical corporate training.
           </p>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-24 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
+      <section className="py-14 sm:py-24 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center mb-14 sm:mb-20">
             <div className="animate-fade-in-left">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 transition-all hover:scale-110 hover:shadow-lg"
                 style={{ background: `${GOLD}22`, color: GOLD }}>
                 Our Story
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight" style={{ color: NAVY }}>
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight" style={{ color: NAVY }}>
                 {settings.about_title || 'Delivering Excellence'}<br />
                 <span style={{ color: GOLD }}>Since Day One</span>
               </h2>
-              <p className="text-gray-600 leading-relaxed mb-6 text-lg transition-all hover:text-gray-800">
+              <p className="text-gray-600 leading-relaxed mb-6 text-base sm:text-lg transition-all hover:text-gray-800">
                 {settings.about_description || 'Enka Prime Consulting Ltd is a professional corporate training firm committed to empowering individuals and organisations through high-impact, practical skill development programmes.'}
               </p>
               <p className="text-gray-600 leading-relaxed mb-6 transition-all hover:text-gray-800">
@@ -69,7 +69,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
                 <img
                   src={settings.about_image || "https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg"}
                   alt="Professional meeting"
-                  className="w-full h-96 object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-64 sm:h-96 object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent" />
                 <div className="absolute inset-0 border-2 rounded-2xl" style={{ borderColor: `${GOLD}40` }} />
@@ -78,7 +78,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
           </div>
 
           {/* Mission & Vision */}
-          <div className="grid md:grid-cols-2 gap-10 mb-20">
+          <div className="grid md:grid-cols-2 gap-5 sm:gap-10 mb-14 sm:mb-20">
             {[
               {
                 title: 'Our Mission',
@@ -97,7 +97,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
               return (
                 <div
                   key={item.title}
-                  className="p-10 rounded-2xl border-2 transition-all duration-500 hover:shadow-xl hover:-translate-y-2"
+                  className="p-6 sm:p-10 rounded-xl sm:rounded-2xl border-2 transition-all duration-500 hover:shadow-xl hover:-translate-y-2"
                   style={{
                     background: `${NAVY}02`,
                     borderColor: `${GOLD}40`,
@@ -122,19 +122,19 @@ export default function About({ onNavigate, settings }: AboutProps) {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-24 bg-gray-50 relative overflow-hidden">
+      <section className="py-14 sm:py-24 bg-gray-50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-400/5 rounded-full blur-3xl" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-16 animate-fade-in-down">
-            <h2 className="text-4xl font-bold mb-4" style={{ color: NAVY }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="text-center mb-10 sm:mb-16 animate-fade-in-down">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: NAVY }}>
               Why Choose <span style={{ color: GOLD }}>Enka Prime?</span>
             </h2>
-            <p className="text-gray-500 max-w-2xl mx-auto text-lg">
+            <p className="text-gray-500 max-w-2xl mx-auto text-base sm:text-lg">
               We're committed to delivering training that makes a measurable difference.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {[
               { icon: CheckCircle, title: 'In-House Delivery', desc: 'All programmes delivered at your premises for convenience and team cohesion.' },
               { icon: Award, title: 'Certified Trainers', desc: 'Industry-experienced facilitators with proven track records across disciplines.' },
@@ -143,7 +143,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
             ].map(({ icon: Icon, title, desc }, idx) => (
               <div
                 key={title}
-                className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg transition-all duration-500 hover:-translate-y-2 group"
+                className="bg-white p-6 sm:p-7 rounded-xl sm:rounded-2xl border border-gray-100 hover:shadow-lg transition-all duration-500 hover:-translate-y-2 group"
                 style={{
                   animation: `slideInUp 0.6s ease-out ${idx * 100}ms both`
                 }}
@@ -165,7 +165,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
       </section>
 
       {/* Team Section */}
-      <section className="relative py-20 rounded-2xl overflow-hidden mx-6 my-20">
+      <section className="relative py-14 sm:py-20 sm:rounded-2xl overflow-hidden mx-0 sm:mx-6 my-0 sm:my-20">
         <div className="absolute inset-0">
           <img
             src={settings.team_image || "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg"}
@@ -175,11 +175,11 @@ export default function About({ onNavigate, settings }: AboutProps) {
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${NAVY}95, ${NAVY}88)` }} />
         </div>
 
-        <div className="relative z-10 max-w-3xl mx-auto text-center px-6 py-20 animate-fade-in">
-          <h3 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
+        <div className="relative z-10 max-w-3xl mx-auto text-center px-4 sm:px-6 py-10 sm:py-20 animate-fade-in">
+          <h3 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-lg">
             Our <span style={{ color: GOLD }}>Experienced Team</span>
           </h3>
-          <p className="text-blue-100 text-lg leading-relaxed drop-shadow-md">
+          <p className="text-blue-100 text-base sm:text-lg leading-relaxed drop-shadow-md">
             Every trainer on our team brings extensive corporate experience. We recruit facilitators who have walked
             in our clients' shoes — individuals who understand the real challenges of modern organisations and know
             what it takes to deliver results.
@@ -188,15 +188,15 @@ export default function About({ onNavigate, settings }: AboutProps) {
       </section>
 
       {/* Commitment Section */}
-      <section className="py-24 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16 animate-fade-in-down">
-            <h2 className="text-4xl font-bold mb-4" style={{ color: NAVY }}>
+      <section className="py-14 sm:py-24 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16 animate-fade-in-down">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: NAVY }}>
               Our <span style={{ color: GOLD }}>Commitment to You</span>
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-5 sm:gap-8">
             {[
               { number: '01', title: 'Quality Assurance', desc: 'Every programme is rigorously designed, delivered by certified trainers, and evaluated for measurable outcomes.' },
               { number: '02', title: 'Customisation', desc: 'We work closely with you to understand your specific needs and tailor content to your industry and team.' },
@@ -204,7 +204,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
             ].map(({ number, title, desc }, idx) => (
               <div
                 key={number}
-                className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border border-gray-100 group"
+                className="bg-gradient-to-br from-white to-gray-50 p-6 sm:p-8 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border border-gray-100 group"
                 style={{
                   animation: `slideInUp 0.6s ease-out ${idx * 100}ms both`
                 }}
@@ -223,7 +223,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
       </section>
 
       {/* Contact CTA */}
-      <section className="py-20 relative overflow-hidden">
+      <section className="py-14 sm:py-20 relative overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={settings.about_cta_image || "https://images.pexels.com/photos/3532554/pexels-photo-3532554.jpeg"}
@@ -233,8 +233,8 @@ export default function About({ onNavigate, settings }: AboutProps) {
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${NAVY}95, ${NAVY}85)` }} />
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10 animate-fade-in">
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg">
             Let's Partner<br />
             <span style={{ color: GOLD }}>For Success</span>
           </h2>
@@ -243,7 +243,7 @@ export default function About({ onNavigate, settings }: AboutProps) {
           </p>
           <button
             onClick={() => onNavigate('contact')}
-            className="inline-flex items-center gap-2 px-10 py-4 font-bold text-lg rounded tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-1"
+            className="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-4 font-bold text-base sm:text-lg rounded tracking-wide transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 w-full sm:w-auto"
             style={{ background: GOLD, color: NAVY }}
           >
             Get In Touch <ArrowRight size={20} />

@@ -203,7 +203,7 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
     <div className="min-h-screen bg-white font-sans pt-20 overflow-hidden">
 
       {/* ── SECTION 1: HERO ── */}
-      <section className="relative py-28 overflow-hidden">
+      <section className="relative py-16 sm:py-28 overflow-hidden">
         <div className="absolute inset-0">
           <img src={data.heroImage} alt={data.title} className="w-full h-full object-cover scale-105" />
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${NAVY}F2 0%, ${NAVY}CC 100%)` }} />
@@ -211,7 +211,7 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
             style={{ backgroundImage: 'linear-gradient(rgba(201,168,76,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.3) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <button
             onClick={() => onNavigate('services')}
             className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-lg text-white font-semibold hover:bg-white/10 transition-colors"
@@ -225,25 +225,25 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
             Enka Prime Consulting
           </div>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-5 leading-tight max-w-4xl">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-5 leading-tight max-w-4xl">
             {data.title}
           </h1>
-          <p className="text-xl text-blue-100 max-w-2xl italic leading-relaxed">
+          <p className="text-lg sm:text-xl text-blue-100 max-w-2xl italic leading-relaxed">
             {data.tagline}
           </p>
         </div>
       </section>
 
       {/* ── SECTION 2: SERVICE COMPONENTS ── */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-14 items-center">
+      <section className="py-14 sm:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-5"
                 style={{ background: `${GOLD}18`, color: GOLD }}>
                 What We Deliver
               </div>
-              <h2 className="text-3xl font-extrabold mb-6" style={{ color: NAVY }}>
+              <h2 className="text-2xl sm:text-3xl font-extrabold mb-6" style={{ color: NAVY }}>
                 Scope of <span style={{ color: GOLD }}>Service</span>
               </h2>
               <p className="text-gray-500 mb-8 leading-relaxed">
@@ -280,14 +280,14 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
       </section>
 
       {/* ── SECTION 3: PAIN POINTS ── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
+      <section className="py-14 sm:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4"
               style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
               <AlertTriangle size={12} /> The Problem
             </div>
-            <h2 className="text-3xl font-extrabold mb-3" style={{ color: NAVY }}>
+            <h2 className="text-2xl sm:text-3xl font-extrabold mb-3" style={{ color: NAVY }}>
               What Organisations Are <span className="text-red-600">Struggling With</span>
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto text-sm">
@@ -295,9 +295,9 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {data.painPoints.map((point, i) => (
-              <div key={i} className="flex items-start gap-3 p-5 rounded-2xl border transition-all duration-200 hover:shadow-md"
+              <div key={i} className="flex items-start gap-3 p-4 sm:p-5 rounded-xl sm:rounded-2xl border transition-all duration-200 hover:shadow-md"
                 style={{ background: '#fff5f5', borderColor: '#fecaca' }}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 bg-red-100">
                   <AlertTriangle size={14} className="text-red-500" />
@@ -310,14 +310,14 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
       </section>
 
       {/* ── SECTION 4: WHAT WE FIX ── */}
-      <section className="py-20" style={{ background: `${NAVY}06` }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
+      <section className="py-14 sm:py-20" style={{ background: `${NAVY}06` }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4"
               style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
               <Wrench size={12} /> Our Approach
             </div>
-            <h2 className="text-3xl font-extrabold mb-3" style={{ color: NAVY }}>
+            <h2 className="text-2xl sm:text-3xl font-extrabold mb-3" style={{ color: NAVY }}>
               How <span style={{ color: GOLD }}>Enka Prime</span> Intervenes
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto text-sm">
@@ -325,9 +325,9 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-5">
             {data.solutions.map((item, i) => (
-              <div key={i} className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-green-100 hover:shadow-md hover:border-green-200 transition-all duration-200">
+              <div key={i} className="flex items-start gap-4 p-4 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-green-100 hover:shadow-md hover:border-green-200 transition-all duration-200">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-extrabold"
                   style={{ background: '#dcfce7', color: '#16a34a' }}>
                   {String(i + 1).padStart(2, '0')}
@@ -340,14 +340,14 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
       </section>
 
       {/* ── SECTION 5: BENEFITS / OUTCOMES ── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
+      <section className="py-14 sm:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4"
               style={{ background: `${GOLD}18`, color: GOLD }}>
               <TrendingUp size={12} /> Measurable Impact
             </div>
-            <h2 className="text-3xl font-extrabold mb-3" style={{ color: NAVY }}>
+            <h2 className="text-2xl sm:text-3xl font-extrabold mb-3" style={{ color: NAVY }}>
               Benefits & <span style={{ color: GOLD }}>Outcomes</span>
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto text-sm">
@@ -355,9 +355,9 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {data.benefits.map((benefit, i) => (
-              <div key={i} className="p-6 rounded-2xl border border-gray-100 hover:border-yellow-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group bg-white">
+              <div key={i} className="p-5 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-100 hover:border-yellow-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group bg-white">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: `${GOLD}18` }}>
                   <CheckCircle size={20} style={{ color: GOLD }} />
@@ -370,19 +370,19 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
       </section>
 
       {/* ── SECTION 6: CTA ── */}
-      <section className="py-24 relative overflow-hidden">
+      <section className="py-14 sm:py-24 relative overflow-hidden">
         <div className="absolute inset-0">
           <img src="https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg" alt="CTA background" className="w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${NAVY}F2, ${NAVY}CC)` }} />
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6"
             style={{ background: `${GOLD}25`, color: GOLD, border: `1px solid ${GOLD}40` }}>
             Ready to Get Started?
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-5 leading-tight">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-5 leading-tight">
             Let's Build a Solution for<br />
             <span style={{ color: GOLD }}>Your Organisation</span>
           </h2>
@@ -394,21 +394,21 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => onNavigate('contact')}
-              className="inline-flex items-center justify-center gap-2 px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
               style={{ background: GOLD, color: NAVY }}
             >
               Request Consultation <ArrowRight size={18} />
             </button>
             <a
               href="mailto:info@enkaprime.com"
-              className="inline-flex items-center justify-center gap-2 px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105"
+              className="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105"
               style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.25)' }}
             >
               <Mail size={18} /> Email Us Directly
             </a>
             <a
               href="tel:0200769146"
-              className="inline-flex items-center justify-center gap-2 px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105"
+              className="inline-flex items-center justify-center gap-2 px-8 sm:px-10 py-4 font-bold text-base rounded-xl transition-all duration-300 hover:scale-105"
               style={{ background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
             >
               <Phone size={18} /> Call Us
