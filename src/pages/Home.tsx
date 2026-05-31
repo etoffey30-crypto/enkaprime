@@ -312,7 +312,7 @@ export default function Home({ onNavigate, settings }: HomeProps) {
 
             <div className="grid grid-cols-1 gap-3 pt-2">
               {bullets.map((item) => (
-                <div key={item} className="flex items-start gap-3 group">
+                <div key={item} className="fly-target fly-trigger flex items-start gap-3 group">
                   <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-custom-secondary/15">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 6l3 3 5-5" stroke="var(--secondary-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

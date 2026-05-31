@@ -71,6 +71,28 @@ export default function App() {
 
   useEffect(() => { loadPublicData(); }, [loadPublicData]);
 
+  // Global delegated handler: when clicking any element with .fly-trigger,
+  // animate all .fly-target elements within the same section with a fly-in effect.
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const trigger = target.closest('.fly-trigger');
+      if (!trigger) return;
+      const scope = (trigger.closest('section') as HTMLElement) || document.documentElement;
+      const nodes = Array.from(scope.querySelectorAll<HTMLElement>('.fly-target'));
+      nodes.forEach((el, i) => {
+        // reset to allow re-trigger
+        el.classList.remove('fly-in');
+        void el.offsetWidth; // force reflow
+        setTimeout(() => el.classList.add('fly-in'), i * 80);
+        // cleanup after animation
+        setTimeout(() => el.classList.remove('fly-in'), 1000 + i * 80);
+      });
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
+
   // Dynamic Design System Variable & Font Injection
   useEffect(() => {
     try {

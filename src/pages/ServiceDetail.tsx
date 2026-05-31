@@ -251,7 +251,13 @@ export default function ServiceDetail({ serviceKey, onNavigate }: ServiceDetailP
               </p>
               <div className="space-y-3">
                 {data.components.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-gray-100 hover:border-yellow-300 hover:shadow-sm transition-all duration-200">
+                  <div
+                    key={i}
+                    className="fly-target fly-trigger flex items-start gap-3 p-4 bg-white rounded-xl border border-gray-100 hover:border-yellow-300 hover:shadow-sm transition-all duration-200"
+                    onClick={() => {
+                      // trigger handled by global listener; keep for accessibility
+                    }}
+                  >
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
                       style={{ background: `${GOLD}20` }}>
                       <CheckCircle size={14} style={{ color: GOLD }} />
