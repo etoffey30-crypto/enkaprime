@@ -38,9 +38,19 @@ jobs:
 
       - name: Add CNAME to build
         run: echo "enkaprime.com" > dist/CNAME
-      - name: Deploy to gh-pages
-        uses: JamesIves/github-pages-deploy-action@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh-pages
-          folder: dist
-          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./dist
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
